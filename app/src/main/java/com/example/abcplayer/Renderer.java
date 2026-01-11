@@ -7,13 +7,13 @@ import java.util.Map;
 /**
  * Score（複数ボイス構造）を単一の NoteEvent[] に変換するレンダラ。
  *
- * 役割:
- *  - 各ボイスの NoteEvent を時間軸に沿って展開
- *  - 全ボイスを合成（ミックス）
- *  - 最終的に 1 本の NoteEvent[] として返す
+ * 旧版の「1拍ごとに切り刻む方式」を廃止し、
+ * 音符の境界で区切ってミックスする「DAW型ミキサー」に変更。
  *
- * ※ Synth は既存の和音合成ロジックを使うため、
- *   複数ボイスは「巨大な和音」として自然に合成される。
+ * これにより：
+ *  - 最初の2音だけ鳴る問題が解消
+ *  - 長さの異なる音符が混在しても正しく同期
+ *  - 和音 + 複数ボイスも正しく合成
  */
 public class Renderer {
 
@@ -22,80 +22,68 @@ public class Renderer {
      */
     public static NoteEvent[] renderToEvents(Score score) {
 
-        // ----------------------------------------
-        // 1. 各ボイスの NoteEvent[] を取得
-        // ----------------------------------------
         Map<String, List<NoteEvent>> voices = score.voices;
 
-        // ボイスが 1 つもない場合は空
         if (voices.isEmpty()) {
             return new NoteEvent[0];
         }
 
         // ----------------------------------------
-        // 2. 各ボイスの総拍数を計算し、最大値を求める
+        // 1. 各ボイスの「音符境界（累積拍位置）」を計算
         // ----------------------------------------
-        double maxBeats = 0;
+        List<List<Span>> voiceSpans = new ArrayList<>();
 
         for (List<NoteEvent> list : voices.values()) {
-            double sum = 0;
+            List<Span> spans = new ArrayList<>();
+            double pos = 0;
+
             for (NoteEvent e : list) {
-                sum += e.beats;
+                spans.add(new Span(pos, pos + e.beats, e));
+                pos += e.beats;
             }
-            if (sum > maxBeats) {
-                maxBeats = sum;
-            }
+
+            voiceSpans.add(spans);
         }
 
         // ----------------------------------------
-        // 3. 全ボイスを「拍単位」でミックスする
-        //
-        //    例:
-        //      Voice1: C2 D2 E2 F2   → 8拍
-        //      Voice2: G4 A4         → 8拍
-        //
-        //    → 拍ごとに和音として合成
+        // 2. 全ボイスの境界を統合して「全体の区間」を作る
         // ----------------------------------------
+        List<Double> boundaries = new ArrayList<>();
 
+        for (List<Span> spans : voiceSpans) {
+            for (Span s : spans) {
+                if (!boundaries.contains(s.start)) boundaries.add(s.start);
+                if (!boundaries.contains(s.end)) boundaries.add(s.end);
+            }
+        }
+
+        boundaries.sort(Double::compare);
+
+        // ----------------------------------------
+        // 3. 各区間ごとに「その区間で鳴っている音」を集めて和音化
+        // ----------------------------------------
         List<NoteEvent> mixed = new ArrayList<>();
 
-        // 各ボイスの進行位置（拍単位）
-        double[] pos = new double[voices.size()];
-        int voiceIndex = 0;
-
-        // ボイスごとの NoteEvent リストを配列化
-        List<NoteEvent>[] voiceEvents = new List[voices.size()];
-        int idx = 0;
-        for (List<NoteEvent> list : voices.values()) {
-            voiceEvents[idx++] = list;
-        }
-
-        // 拍単位で走査
-        double beat = 0;
-        while (beat < maxBeats) {
+        for (int i = 0; i < boundaries.size() - 1; i++) {
+            double start = boundaries.get(i);
+            double end = boundaries.get(i + 1);
+            double duration = end - start;
 
             List<Integer> activeNotes = new ArrayList<>();
 
-            // 各ボイスの現在の音を取得
-            for (int v = 0; v < voiceEvents.length; v++) {
-                List<NoteEvent> list = voiceEvents[v];
-
-                double acc = 0;
-                for (NoteEvent e : list) {
-                    if (beat >= acc && beat < acc + e.beats) {
-                        if (!e.isRest) {
-                            for (int m : e.midiNotes) {
+            // 各ボイスの該当区間の音を探す
+            for (List<Span> spans : voiceSpans) {
+                for (Span s : spans) {
+                    if (start >= s.start && start < s.end) {
+                        if (!s.event.isRest) {
+                            for (int m : s.event.midiNotes) {
                                 if (m >= 0) activeNotes.add(m);
                             }
                         }
                         break;
                     }
-                    acc += e.beats;
                 }
             }
-
-            // この拍の長さは 1 拍
-            double duration = 1.0;
 
             if (activeNotes.isEmpty()) {
                 mixed.add(new NoteEvent("mix", new int[]{-1}, duration, true));
@@ -103,10 +91,23 @@ public class Renderer {
                 int[] arr = activeNotes.stream().mapToInt(x -> x).toArray();
                 mixed.add(new NoteEvent("mix", arr, duration, false));
             }
-
-            beat += 1.0;
         }
 
         return mixed.toArray(new NoteEvent[0]);
+    }
+
+    /**
+     * ボイス内の音符を「開始拍」「終了拍」で表す構造
+     */
+    private static class Span {
+        double start;
+        double end;
+        NoteEvent event;
+
+        Span(double s, double e, NoteEvent ev) {
+            start = s;
+            end = e;
+            event = ev;
+        }
     }
 }
