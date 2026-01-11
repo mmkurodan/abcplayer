@@ -68,22 +68,23 @@ public class MainActivity extends Activity {
 
     private class PlayTask extends AsyncTask<String, Void, String> {
 
+        private short[] pcm;
+
         @Override
         protected String doInBackground(String... params) {
             String abc = params[0];
 
             try {
                 AbcParser parser = new AbcParser();
-                NoteEvent[] notes = parser.parse(abc);
+                Score score = parser.parseScore(abc);
 
-                if (notes.length == 0) {
-                    return "解析結果が空です";
-                }
+                // 複数ボイス → ミックス済み NoteEvent[]
+                NoteEvent[] notes = Renderer.renderToEvents(score);
 
-                double tempo = parser.getHeader().tempoBpm;
-                double defaultLen = parser.getHeader().defaultNoteLength;
+                double tempo = score.header.tempoBpm;
+                double defaultLen = score.header.defaultNoteLength;
 
-                short[] pcm = SineWaveSynth.generatePcm(
+                pcm = SineWaveSynth.generatePcm(
                         notes,
                         44100,
                         tempo,
@@ -124,10 +125,8 @@ public class MainActivity extends Activity {
 
                 audioTrack.write(pcm, 0, pcm.length);
 
-                // ★ 再生終了を検知するためのマーカー設定
-                audioTrack.setNotificationMarkerPosition(pcm.length);
+                audioTrack.setNotificationMarkerPosition(pcm.length / 2);
 
-                // ★ 再生終了イベントを受け取るリスナー
                 audioTrack.setPlaybackPositionUpdateListener(
                         new AudioTrack.OnPlaybackPositionUpdateListener() {
                             @Override
@@ -136,9 +135,7 @@ public class MainActivity extends Activity {
                             }
 
                             @Override
-                            public void onPeriodicNotification(AudioTrack track) {
-                                // 使わない
-                            }
+                            public void onPeriodicNotification(AudioTrack track) {}
                         }
                 );
 
