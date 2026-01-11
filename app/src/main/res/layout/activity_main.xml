@@ -9,7 +9,7 @@
         android:id="@+id/editAbc"
         android:layout_width="match_parent"
         android:layout_height="150dp"
-        android:hint="例: C D E F G A B c"
+        android:hint="ABC Notation を入力"
         android:gravity="top|start"
         android:inputType="textMultiLine" />
 
