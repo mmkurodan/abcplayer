@@ -21,7 +21,6 @@ public class AbcParser {
         while (i < tokens.size()) {
             String t = tokens.get(i).text;
 
-            // ヘッダ処理
             if (t.equals("M:")) {
                 i++;
                 header.setMeter(tokens.get(i).text);
@@ -47,7 +46,6 @@ public class AbcParser {
                 continue;
             }
 
-            // 和音
             if (t.equals("[")) {
                 i++;
                 List<Integer> chord = new ArrayList<>();
@@ -55,9 +53,8 @@ public class AbcParser {
                     chord.add(parseSingleNote(tokens, i));
                     i++;
                 }
-                i++; // skip ']'
+                i++;
 
-                // 長さ
                 double len = header.defaultNoteLength;
                 if (i < tokens.size() && isLengthToken(tokens.get(i).text)) {
                     len = Utils.parseLength(tokens.get(i).text) * header.defaultNoteLength;
@@ -69,12 +66,10 @@ public class AbcParser {
                 continue;
             }
 
-            // 単音 or 休符
             if (isNoteLetter(t) || t.equals("z")) {
                 int midi = parseSingleNote(tokens, i);
                 i++;
 
-                // 長さ
                 double len = header.defaultNoteLength;
                 if (i < tokens.size() && isLengthToken(tokens.get(i).text)) {
                     len = Utils.parseLength(tokens.get(i).text) * header.defaultNoteLength;
@@ -103,7 +98,6 @@ public class AbcParser {
         int accidental = 0;
         int octaveShift = 0;
 
-        // 変化記号
         while (i < tokens.size()) {
             String t = tokens.get(i).text;
             if (t.equals("^")) { accidental++; i++; continue; }
@@ -112,17 +106,15 @@ public class AbcParser {
             break;
         }
 
-        // 音符 or 休符
         String note = tokens.get(i).text;
         int midi;
         if (note.equals("z")) {
-            midi = -1; // 休符
+            midi = -1;
         } else {
             midi = Utils.noteLetterToMidi(note.charAt(0));
         }
         i++;
 
-        // オクターブ
         while (i < tokens.size()) {
             String t = tokens.get(i).text;
             if (t.equals("'")) { octaveShift++; i++; continue; }
