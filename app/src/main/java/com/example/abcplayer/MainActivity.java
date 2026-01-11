@@ -71,16 +71,21 @@ public class MainActivity extends Activity {
             String abc = params[0];
 
             try {
-                NoteEvent[] notes = SimpleAbcParser.parse(abc);
+                AbcParser parser = new AbcParser();
+                NoteEvent[] notes = parser.parse(abc);
 
                 if (notes.length == 0) {
                     return "解析結果が空です";
                 }
 
+                double tempo = parser.getHeader().tempoBpm;
+                double defaultLen = parser.getHeader().defaultNoteLength;
+
                 short[] pcm = SineWaveSynth.generatePcm(
                         notes,
                         44100,
-                        0.5
+                        tempo,
+                        defaultLen
                 );
 
                 if (isCancelled()) {
