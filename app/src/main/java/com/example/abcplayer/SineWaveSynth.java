@@ -5,10 +5,10 @@ public class SineWaveSynth {
     /**
      * NoteEvent[] → PCM(short[]) を生成する。
      *
-     * @param notes       ミックス済み NoteEvent[]
-     * @param sampleRate  サンプリングレート（44100）
-     * @param tempoBpm    Q: のテンポ
-     * @param defaultLen  L: のデフォルト長さ
+     * 重要：
+     *   - 音符ごとに t=0 から開始する旧方式を廃止
+     *   - 曲全体で 1 本の時間軸を使う「連続時間方式」
+     *   - 複数ボイスの和音が正しく同時発声される
      */
     public static short[] generatePcm(
             NoteEvent[] notes,
@@ -28,7 +28,8 @@ public class SineWaveSynth {
 
         short[] pcm = new short[totalSamples];
 
-        int writePos = 0;
+        // 曲全体の時間軸（サンプル位置）
+        int globalSampleIndex = 0;
 
         for (NoteEvent n : notes) {
 
@@ -38,43 +39,38 @@ public class SineWaveSynth {
             if (n.isRest) {
                 // 休符 → 無音
                 for (int i = 0; i < samples; i++) {
-                    if (writePos + i < pcm.length) {
-                        pcm[writePos + i] = 0;
+                    if (globalSampleIndex + i < pcm.length) {
+                        pcm[globalSampleIndex + i] = 0;
                     }
                 }
-                writePos += samples;
+                globalSampleIndex += samples;
                 continue;
             }
 
             // 和音（複数周波数）を合成
-            double[][] waves = new double[n.midiNotes.length][samples];
-
-            for (int v = 0; v < n.midiNotes.length; v++) {
-                int midi = n.midiNotes[v];
-                double freq = midiToFreq(midi);
-
-                for (int i = 0; i < samples; i++) {
-                    double t = (double) i / sampleRate;
-                    waves[v][i] = Math.sin(2.0 * Math.PI * freq * t);
-                }
-            }
-
-            // 和音をミックス
             for (int i = 0; i < samples; i++) {
+
                 double sum = 0;
-                for (int v = 0; v < waves.length; v++) {
-                    sum += waves[v][i];
+
+                // 曲全体の時間 t（秒）
+                double t = (double) (globalSampleIndex + i) / sampleRate;
+
+                for (int midi : n.midiNotes) {
+                    double freq = midiToFreq(midi);
+                    sum += Math.sin(2.0 * Math.PI * freq * t);
                 }
-                sum /= waves.length; // 正規化
+
+                // 正規化
+                sum /= n.midiNotes.length;
 
                 short s = (short) (sum * 32767);
 
-                if (writePos + i < pcm.length) {
-                    pcm[writePos + i] = s;
+                if (globalSampleIndex + i < pcm.length) {
+                    pcm[globalSampleIndex + i] = s;
                 }
             }
 
-            writePos += samples;
+            globalSampleIndex += samples;
         }
 
         return pcm;
