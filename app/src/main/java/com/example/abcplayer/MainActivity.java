@@ -52,7 +52,9 @@ public class MainActivity extends Activity {
             currentTask = null;
         }
         if (audioTrack != null) {
-            audioTrack.stop();
+            try {
+                audioTrack.stop();
+            } catch (Exception ignored) {}
             audioTrack.release();
             audioTrack = null;
         }
@@ -121,6 +123,25 @@ public class MainActivity extends Activity {
                         .build();
 
                 audioTrack.write(pcm, 0, pcm.length);
+
+                // ★ 再生終了を検知するためのマーカー設定
+                audioTrack.setNotificationMarkerPosition(pcm.length);
+
+                // ★ 再生終了イベントを受け取るリスナー
+                audioTrack.setPlaybackPositionUpdateListener(
+                        new AudioTrack.OnPlaybackPositionUpdateListener() {
+                            @Override
+                            public void onMarkerReached(AudioTrack track) {
+                                runOnUiThread(() -> txtStatus.setText("再生終了"));
+                            }
+
+                            @Override
+                            public void onPeriodicNotification(AudioTrack track) {
+                                // 使わない
+                            }
+                        }
+                );
+
                 audioTrack.play();
 
                 return "再生中";
