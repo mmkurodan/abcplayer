@@ -1,11 +1,11 @@
 package com.example.abcplayer;
 
 public class NoteEvent {
-    public final int midiNote;
-    public final double durationSec;
+    public final int[] midiNotes;   // 和音対応
+    public final double length;     // ABCの長さ（L: を基準にした相対値）
 
-    public NoteEvent(int midiNote, double durationSec) {
-        this.midiNote = midiNote;
-        this.durationSec = durationSec;
+    public NoteEvent(int[] midiNotes, double length) {
+        this.midiNotes = midiNotes;
+        this.length = length;
     }
 }
