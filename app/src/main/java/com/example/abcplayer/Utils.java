@@ -2,7 +2,6 @@ package com.example.abcplayer;
 
 public class Utils {
 
-    // A4 = 440Hz, MIDI 69
     public static int noteLetterToMidi(char c) {
         switch (c) {
             case 'C': return 60;
@@ -32,15 +31,37 @@ public class Utils {
         return midi + (12 * octaveShift);
     }
 
+    /**
+     * ABC の長さトークンを数値に変換する。
+     *
+     * 例:
+     *  "2"   → 2.0
+     *  "3/2" → 1.5
+     *  "/2"  → 0.5
+     */
     public static double parseLength(String token) {
         if (token.contains("/")) {
-            String[] parts = token.split("/");
-            if (parts.length == 1) {
-                return 1.0 / Double.parseDouble(parts[0]);
-            } else {
-                return Double.parseDouble(parts[0]) / Double.parseDouble(parts[1]);
+            // 空要素も保持する
+            String[] parts = token.split("/", -1);
+
+            // "/n" のケース（例: "/2"）
+            if (parts[0].isEmpty() && parts.length == 2 && !parts[1].isEmpty()) {
+                double denom = Double.parseDouble(parts[1]);
+                return 1.0 / denom;
             }
+
+            // "n/m" のケース（例: "3/2")
+            if (!parts[0].isEmpty() && parts.length == 2 && !parts[1].isEmpty()) {
+                double num = Double.parseDouble(parts[0]);
+                double denom = Double.parseDouble(parts[1]);
+                return num / denom;
+            }
+
+            // 想定外フォーマットは防御的に 1.0 にフォールバック
+            return 1.0;
         }
+
+        // 単純な整数 "2" など
         return Double.parseDouble(token);
     }
 }
