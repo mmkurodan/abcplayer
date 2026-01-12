@@ -10,6 +10,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import java.util.Arrays;
+
 public class MainActivity extends Activity {
 
     private EditText editAbc;
@@ -78,9 +80,27 @@ public class MainActivity extends Activity {
                 AbcParser parser = new AbcParser();
                 Score score = parser.parseScore(abc);
 
-                // 複数ボイス → ミックス済み NoteEvent[]
+                // ★ Renderer の出力を取得
                 NoteEvent[] notes = Renderer.renderToEvents(score);
 
+                // ★ Renderer の出力を画面に表示（方法3）
+                StringBuilder sb = new StringBuilder();
+                sb.append("Rendered Events:\n");
+                for (NoteEvent n : notes) {
+                    sb.append("beats=")
+                      .append(n.beats)
+                      .append("  midi=")
+                      .append(Arrays.toString(n.midiNotes))
+                      .append("  rest=")
+                      .append(n.isRest)
+                      .append("\n");
+                }
+                String debugText = sb.toString();
+
+                // UI スレッドで表示
+                runOnUiThread(() -> txtStatus.setText(debugText));
+
+                // ★ PCM 生成
                 double tempo = score.header.tempoBpm;
                 double defaultLen = score.header.defaultNoteLength;
 
@@ -131,7 +151,7 @@ public class MainActivity extends Activity {
                         new AudioTrack.OnPlaybackPositionUpdateListener() {
                             @Override
                             public void onMarkerReached(AudioTrack track) {
-                                runOnUiThread(() -> txtStatus.setText("再生終了"));
+                                runOnUiThread(() -> txtStatus.append("\n再生終了"));
                             }
 
                             @Override
@@ -151,7 +171,7 @@ public class MainActivity extends Activity {
 
         @Override
         protected void onPostExecute(String result) {
-            txtStatus.setText(result);
+            // 再生中のメッセージは append しない（debugText が表示されているため）
         }
 
         @Override
@@ -159,4 +179,4 @@ public class MainActivity extends Activity {
             txtStatus.setText("キャンセル");
         }
     }
-}
+                                              }
