@@ -47,7 +47,7 @@ public class AbcTokenizer {
             }
 
             // ------------------------------------
-            // ★ Voice 宣言 V: の特別扱い（最重要修正）
+            // ★ Voice 宣言 V: の特別扱い（最重要）
             // ------------------------------------
             if (c == 'V' && i + 1 < src.length() && src.charAt(i + 1) == ':') {
                 tokens.add(new Token("V:"));
