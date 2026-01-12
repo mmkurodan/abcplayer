@@ -7,15 +7,22 @@ import java.util.Map;
 /**
  * Score（複数ボイス構造）を単一の NoteEvent[] に変換するレンダラ。
  *
- * 旧版の「1拍ごとに切り刻む方式」を廃止し、
- * 音符の境界で区切ってミックスする「DAW型ミキサー」に変更。
- *
- * これにより：
- *  - 最初の2音だけ鳴る問題が解消
- *  - 長さの異なる音符が混在しても正しく同期
- *  - 和音 + 複数ボイスも正しく合成
+ * 音符境界を正しく統合するために「誤差許容付き double 比較」を導入。
+ * これにより、V1 と V2 の音符長が異なる場合でも完全に同期する。
  */
 public class Renderer {
+
+    private static final double EPS = 1e-9;
+
+    /**
+     * 誤差許容付きの contains
+     */
+    private static boolean containsApprox(List<Double> list, double value) {
+        for (double v : list) {
+            if (Math.abs(v - value) < EPS) return true;
+        }
+        return false;
+    }
 
     /**
      * Score → NoteEvent[]（ミックス済み）に変換する。
@@ -52,8 +59,8 @@ public class Renderer {
 
         for (List<Span> spans : voiceSpans) {
             for (Span s : spans) {
-                if (!boundaries.contains(s.start)) boundaries.add(s.start);
-                if (!boundaries.contains(s.end)) boundaries.add(s.end);
+                if (!containsApprox(boundaries, s.start)) boundaries.add(s.start);
+                if (!containsApprox(boundaries, s.end)) boundaries.add(s.end);
             }
         }
 
@@ -74,7 +81,7 @@ public class Renderer {
             // 各ボイスの該当区間の音を探す
             for (List<Span> spans : voiceSpans) {
                 for (Span s : spans) {
-                    if (start >= s.start && start < s.end) {
+                    if (start + EPS >= s.start && start < s.end - EPS) {
                         if (!s.event.isRest) {
                             for (int m : s.event.midiNotes) {
                                 if (m >= 0) activeNotes.add(m);
