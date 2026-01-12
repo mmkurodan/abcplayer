@@ -11,6 +11,8 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 public class MainActivity extends Activity {
 
@@ -80,25 +82,45 @@ public class MainActivity extends Activity {
                 AbcParser parser = new AbcParser();
                 Score score = parser.parseScore(abc);
 
-                // ★ Renderer の出力を取得
+                // ★ Score.voices のログ出力
+                StringBuilder sbVoices = new StringBuilder();
+                sbVoices.append("=== Score.voices ===\n");
+
+                for (Map.Entry<String, List<NoteEvent>> entry : score.voices.entrySet()) {
+                    sbVoices.append("Voice: ").append(entry.getKey())
+                            .append("  count=").append(entry.getValue().size())
+                            .append("\n");
+
+                    for (NoteEvent e : entry.getValue()) {
+                        sbVoices.append("  beats=")
+                                .append(e.beats)
+                                .append(" midi=")
+                                .append(Arrays.toString(e.midiNotes))
+                                .append(" rest=")
+                                .append(e.isRest)
+                                .append("\n");
+                    }
+                }
+
+                runOnUiThread(() -> txtStatus.setText(sbVoices.toString()));
+
+                // ★ Renderer の出力
                 NoteEvent[] notes = Renderer.renderToEvents(score);
 
-                // ★ Renderer の出力を画面に表示（方法3）
-                StringBuilder sb = new StringBuilder();
-                sb.append("Rendered Events:\n");
-                for (NoteEvent n : notes) {
-                    sb.append("beats=")
-                      .append(n.beats)
-                      .append("  midi=")
-                      .append(Arrays.toString(n.midiNotes))
-                      .append("  rest=")
-                      .append(n.isRest)
-                      .append("\n");
-                }
-                String debugText = sb.toString();
+                StringBuilder sbRender = new StringBuilder();
+                sbRender.append("\n=== Rendered Events ===\n");
 
-                // UI スレッドで表示
-                runOnUiThread(() -> txtStatus.setText(debugText));
+                for (NoteEvent n : notes) {
+                    sbRender.append("beats=")
+                            .append(n.beats)
+                            .append(" midi=")
+                            .append(Arrays.toString(n.midiNotes))
+                            .append(" rest=")
+                            .append(n.isRest)
+                            .append("\n");
+                }
+
+                runOnUiThread(() -> txtStatus.append(sbRender.toString()));
 
                 // ★ PCM 生成
                 double tempo = score.header.tempoBpm;
@@ -145,7 +167,8 @@ public class MainActivity extends Activity {
 
                 audioTrack.write(pcm, 0, pcm.length);
 
-                audioTrack.setNotificationMarkerPosition(pcm.length / 2);
+                // ★ 再生終了位置は pcm.length（重要）
+                audioTrack.setNotificationMarkerPosition(pcm.length);
 
                 audioTrack.setPlaybackPositionUpdateListener(
                         new AudioTrack.OnPlaybackPositionUpdateListener() {
@@ -171,7 +194,7 @@ public class MainActivity extends Activity {
 
         @Override
         protected void onPostExecute(String result) {
-            // 再生中のメッセージは append しない（debugText が表示されているため）
+            // ここでは何もしない
         }
 
         @Override
@@ -179,4 +202,4 @@ public class MainActivity extends Activity {
             txtStatus.setText("キャンセル");
         }
     }
-                                              }
+}
