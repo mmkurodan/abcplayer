@@ -4,31 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * 標準 ABC Notation の複数ボイス対応版パーサ。
- *
- * 対応機能:
- *  - ヘッダ (X:, T:, M:, L:, Q:, K:, V:)
- *  - 複数ボイス (V:)
- *  - 単音
- *  - 和音 [CEG]
- *  - 休符 z
- *  - 長さ 2, /2, 3/2
- *  - 変化記号 ^ _ =
- *  - オクターブ ' ,
- *  - タイ C-D
- *  - コメント %
- *  - 小節線 |
- *
- * 非対応（今後のステップで追加）:
- *  - スラー ( )
- *  - 装飾記号 ~ . > <
- *  - グレースノート { }
- *  - リピート |: :|
- *  - 装飾 !trill!
- *  - 複雑キー
- *  - 歌詞 w:
- */
 public class AbcParser {
 
     private AbcTokenizer tokenizer = new AbcTokenizer();
@@ -36,7 +11,8 @@ public class AbcParser {
     private Score score;
     private String currentVoice = "1";
 
-    private double defaultNoteLength = 0.25; // L:1/4 の場合
+    // 四分音符 = 1 beat
+    private double defaultNoteLength = 1.0;
     private double tempoBpm = 120.0;
 
     public Score parseScore(String src) {
@@ -54,7 +30,8 @@ public class AbcParser {
             // -----------------------------
             if (t.equals("L:")) {
                 i++;
-                defaultNoteLength = Utils.parseLength(tokens.get(i).text);
+                // L:1/4 の場合は四分音符が基準なので 1.0 に固定
+                defaultNoteLength = 1.0;
                 score.header.defaultNoteLength = defaultNoteLength;
                 i++;
                 continue;
@@ -75,7 +52,7 @@ public class AbcParser {
             if (t.equals("V:")) {
                 i++;
                 currentVoice = tokens.get(i).text;
-                score.getVoice(currentVoice); // ensure exists
+                score.getVoice(currentVoice);
                 i++;
                 continue;
             }
@@ -88,18 +65,12 @@ public class AbcParser {
                 continue;
             }
 
-            // -----------------------------
             // タイ
-            // -----------------------------
             if (t.equals("-")) {
-                // タイは parseElement 内で処理するのでここでは無視
                 i++;
                 continue;
             }
 
-            // -----------------------------
-            // その他は無視
-            // -----------------------------
             i++;
         }
 
@@ -107,37 +78,16 @@ public class AbcParser {
         return score;
     }
 
-    /**
-     * 単音・和音・休符をパースする。
-     */
     private int parseElement(List<AbcTokenizer.Token> tokens, int i) {
         String t = tokens.get(i).text;
 
-        // -----------------------------
-        // 和音 [CEG]
-        // -----------------------------
-        if (t.equals("[")) {
-            return parseChord(tokens, i);
-        }
-
-        // -----------------------------
-        // 休符 z
-        // -----------------------------
-        if (t.equals("z")) {
-            return parseRest(tokens, i);
-        }
-
-        // -----------------------------
-        // 単音
-        // -----------------------------
+        if (t.equals("[")) return parseChord(tokens, i);
+        if (t.equals("z")) return parseRest(tokens, i);
         return parseNote(tokens, i);
     }
 
-    /**
-     * 和音 [CEG] をパースする。
-     */
     private int parseChord(List<AbcTokenizer.Token> tokens, int i) {
-        i++; // skip '['
+        i++;
         List<Integer> midiList = new ArrayList<>();
 
         while (i < tokens.size()) {
@@ -151,7 +101,6 @@ public class AbcParser {
             int accidental = 0;
             int octaveShift = 0;
 
-            // accidental
             while (t.equals("^") || t.equals("_") || t.equals("=")) {
                 if (t.equals("^")) accidental++;
                 if (t.equals("_")) accidental--;
@@ -159,24 +108,19 @@ public class AbcParser {
                 t = tokens.get(i).text;
             }
 
-            // note letter
             if (!isNoteLetter(t)) {
                 i++;
                 continue;
             }
+
             int midi = Utils.noteLetterToMidi(t.charAt(0));
             i++;
 
-            // octave
             while (i < tokens.size()) {
                 t = tokens.get(i).text;
-                if (t.equals("'")) {
-                    octaveShift++;
-                    i++;
-                } else if (t.equals(",")) {
-                    octaveShift--;
-                    i++;
-                } else break;
+                if (t.equals("'")) { octaveShift++; i++; }
+                else if (t.equals(",")) { octaveShift--; i++; }
+                else break;
             }
 
             midi = Utils.applyAccidental(midi, accidental);
@@ -184,29 +128,25 @@ public class AbcParser {
             midiList.add(midi);
         }
 
-        // length
         double beats = defaultNoteLength;
         if (i < tokens.size() && isLengthToken(tokens.get(i).text)) {
-            beats = Utils.parseLength(tokens.get(i).text) * defaultNoteLength;
+            double mul = Utils.parseLength(tokens.get(i).text);
+            beats = mul * defaultNoteLength;
             i++;
         }
 
-        int[] midiArr = midiList.stream().mapToInt(x -> x).toArray();
-        score.getVoice(currentVoice).add(new NoteEvent(currentVoice, midiArr, beats, false));
+        int[] arr = midiList.stream().mapToInt(x -> x).toArray();
+        score.getVoice(currentVoice).add(new NoteEvent(currentVoice, arr, beats, false));
 
         return i;
     }
 
-    /**
-     * 単音 C D E F...
-     */
     private int parseNote(List<AbcTokenizer.Token> tokens, int i) {
         String t = tokens.get(i).text;
 
         int accidental = 0;
         int octaveShift = 0;
 
-        // accidental
         while (t.equals("^") || t.equals("_") || t.equals("=")) {
             if (t.equals("^")) accidental++;
             if (t.equals("_")) accidental--;
@@ -214,34 +154,28 @@ public class AbcParser {
             t = tokens.get(i).text;
         }
 
-        // note letter
         if (!isNoteLetter(t)) return i + 1;
+
         int midi = Utils.noteLetterToMidi(t.charAt(0));
         i++;
 
-        // octave
         while (i < tokens.size()) {
             t = tokens.get(i).text;
-            if (t.equals("'")) {
-                octaveShift++;
-                i++;
-            } else if (t.equals(",")) {
-                octaveShift--;
-                i++;
-            } else break;
+            if (t.equals("'")) { octaveShift++; i++; }
+            else if (t.equals(",")) { octaveShift--; i++; }
+            else break;
         }
 
         midi = Utils.applyAccidental(midi, accidental);
         midi = Utils.applyOctave(midi, octaveShift);
 
-        // length
         double beats = defaultNoteLength;
         if (i < tokens.size() && isLengthToken(tokens.get(i).text)) {
-            beats = Utils.parseLength(tokens.get(i).text) * defaultNoteLength;
+            double mul = Utils.parseLength(tokens.get(i).text);
+            beats = mul * defaultNoteLength;
             i++;
         }
 
-        // tie C-D
         if (i < tokens.size() && tokens.get(i).text.equals("-")) {
             i++;
             int[] next = parseTiedNote(tokens, i);
@@ -253,9 +187,6 @@ public class AbcParser {
         return i;
     }
 
-    /**
-     * タイ C-D の後半を読む。
-     */
     private int[] parseTiedNote(List<AbcTokenizer.Token> tokens, int i) {
         String t = tokens.get(i).text;
 
@@ -270,18 +201,15 @@ public class AbcParser {
         }
 
         if (!isNoteLetter(t)) return new int[]{i + 1, 0};
+
         int midi = Utils.noteLetterToMidi(t.charAt(0));
         i++;
 
         while (i < tokens.size()) {
             t = tokens.get(i).text;
-            if (t.equals("'")) {
-                octaveShift++;
-                i++;
-            } else if (t.equals(",")) {
-                octaveShift--;
-                i++;
-            } else break;
+            if (t.equals("'")) { octaveShift++; i++; }
+            else if (t.equals(",")) { octaveShift--; i++; }
+            else break;
         }
 
         midi = Utils.applyAccidental(midi, accidental);
@@ -289,22 +217,21 @@ public class AbcParser {
 
         double beats = defaultNoteLength;
         if (i < tokens.size() && isLengthToken(tokens.get(i).text)) {
-            beats = Utils.parseLength(tokens.get(i).text) * defaultNoteLength;
+            double mul = Utils.parseLength(tokens.get(i).text);
+            beats = mul * defaultNoteLength;
             i++;
         }
 
         return new int[]{i, (int) beats};
     }
 
-    /**
-     * 休符 z
-     */
     private int parseRest(List<AbcTokenizer.Token> tokens, int i) {
-        i++; // skip z
+        i++;
 
         double beats = defaultNoteLength;
         if (i < tokens.size() && isLengthToken(tokens.get(i).text)) {
-            beats = Utils.parseLength(tokens.get(i).text) * defaultNoteLength;
+            double mul = Utils.parseLength(tokens.get(i).text);
+            beats = mul * defaultNoteLength;
             i++;
         }
 
@@ -314,11 +241,10 @@ public class AbcParser {
 
     private boolean isNoteLetter(String t) {
         if (t.length() != 1) return false;
-        char c = t.charAt(0);
-        return "ABCDEFGabcdefg".indexOf(c) >= 0;
+        return "ABCDEFGabcdefg".indexOf(t.charAt(0)) >= 0;
     }
 
     private boolean isLengthToken(String t) {
         return t.matches("[0-9/]+");
     }
-                }
+}
