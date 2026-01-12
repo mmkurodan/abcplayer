@@ -7,7 +7,6 @@ public class AbcTokenizer {
 
     public static class Token {
         public final String text;
-
         public Token(String text) {
             this.text = text;
         }
@@ -24,9 +23,7 @@ public class AbcTokenizer {
             // コメント行（%〜行末）をスキップ
             // ------------------------------------
             if (c == '%') {
-                while (i < src.length() && src.charAt(i) != '\n') {
-                    i++;
-                }
+                while (i < src.length() && src.charAt(i) != '\n') i++;
                 continue;
             }
 
@@ -39,7 +36,7 @@ public class AbcTokenizer {
             }
 
             // ------------------------------------
-            // 小節線 | は完全に無視
+            // 小節線 | は無視
             // ------------------------------------
             if (c == '|') {
                 i++;
@@ -47,20 +44,32 @@ public class AbcTokenizer {
             }
 
             // ------------------------------------
-            // ★ Voice 宣言 V: の特別扱い（最重要）
+            // ★ Voice 宣言 V: の特別扱い
             // ------------------------------------
             if (c == 'V' && i + 1 < src.length() && src.charAt(i + 1) == ':') {
                 tokens.add(new Token("V:"));
                 i += 2;
+
+                // voice 名を読み取る（行末 or 空白まで）
+                int start = i;
+                while (i < src.length() && !Character.isWhitespace(src.charAt(i))) i++;
+                tokens.add(new Token(src.substring(start, i)));
                 continue;
             }
 
             // ------------------------------------
-            // ヘッダ (X:, T:, M:, L:, Q:, K:)
+            // ★ ヘッダ (X:, T:, M:, L:, Q:, K:) の処理
             // ------------------------------------
             if (i + 1 < src.length() && src.charAt(i + 1) == ':') {
-                tokens.add(new Token("" + c + ":"));
+                String header = "" + c + ":";
+                tokens.add(new Token(header));
                 i += 2;
+
+                // 行末までを値として読み取る
+                int start = i;
+                while (i < src.length() && src.charAt(i) != '\n') i++;
+                String value = src.substring(start, i).trim();
+                if (!value.isEmpty()) tokens.add(new Token(value));
                 continue;
             }
 
@@ -102,14 +111,11 @@ public class AbcTokenizer {
 
             // ------------------------------------
             // 長さ（数字 or /）
-            // 例: 2, 3/2, /2
             // ------------------------------------
             if (Character.isDigit(c) || c == '/') {
                 int start = i;
                 while (i < src.length() &&
-                        (Character.isDigit(src.charAt(i)) || src.charAt(i) == '/')) {
-                    i++;
-                }
+                        (Character.isDigit(src.charAt(i)) || src.charAt(i) == '/')) i++;
                 tokens.add(new Token(src.substring(start, i)));
                 continue;
             }
