@@ -79,12 +79,25 @@ public class MainActivity extends Activity {
             String abc = params[0];
 
             try {
+                // ★ Tokenizer の結果を表示
+                AbcTokenizer tokenizer = new AbcTokenizer();
+                List<AbcTokenizer.Token> toks = tokenizer.tokenize(abc);
+
+                StringBuilder sbTok = new StringBuilder();
+                sbTok.append("=== Tokenizer ===\n");
+                for (AbcTokenizer.Token t : toks) {
+                    sbTok.append(t.text).append("\n");
+                }
+
+                runOnUiThread(() -> txtStatus.setText(sbTok.toString()));
+
+                // ★ Score の解析
                 AbcParser parser = new AbcParser();
                 Score score = parser.parseScore(abc);
 
                 // ★ Score.voices のログ出力
                 StringBuilder sbVoices = new StringBuilder();
-                sbVoices.append("=== Score.voices ===\n");
+                sbVoices.append("\n=== Score.voices ===\n");
 
                 for (Map.Entry<String, List<NoteEvent>> entry : score.voices.entrySet()) {
                     sbVoices.append("Voice: ").append(entry.getKey())
@@ -102,7 +115,7 @@ public class MainActivity extends Activity {
                     }
                 }
 
-                runOnUiThread(() -> txtStatus.setText(sbVoices.toString()));
+                runOnUiThread(() -> txtStatus.append(sbVoices.toString()));
 
                 // ★ Renderer の出力
                 NoteEvent[] notes = Renderer.renderToEvents(score);
@@ -193,9 +206,7 @@ public class MainActivity extends Activity {
         }
 
         @Override
-        protected void onPostExecute(String result) {
-            // ここでは何もしない
-        }
+        protected void onPostExecute(String result) {}
 
         @Override
         protected void onCancelled(String result) {
