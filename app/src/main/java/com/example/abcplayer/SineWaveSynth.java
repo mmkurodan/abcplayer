@@ -85,4 +85,63 @@ public class SineWaveSynth {
     private static double midiToFreq(int midi) {
         return 440.0 * Math.pow(2.0, (midi - 69) / 12.0);
     }
+
+    /**
+     * 指定サンプル範囲のみを生成する（ストリーミング向け）
+     *
+     * startSample: 全体の先頭からのオフセット（サンプル数）
+     * chunkSamples: 返すサンプル数
+     */
+    public static short[] generatePcmChunk(
+            NoteEvent[] notes,
+            int sampleRate,
+            double tempoBpm,
+            double defaultLen,
+            int startSample,
+            int chunkSamples
+    ) {
+        double secPerBeat = 60.0 / tempoBpm;
+        short[] pcm = new short[chunkSamples];
+        int curSampleIndex = 0;
+
+        for (NoteEvent n : notes) {
+
+            double seconds = n.beats * secPerBeat;
+            int noteSamples = (int) (seconds * sampleRate);
+
+            int noteStart = curSampleIndex;
+            int noteEnd = curSampleIndex + noteSamples;
+
+            int overlapStart = Math.max(noteStart, startSample);
+            int overlapEnd = Math.min(noteEnd, startSample + chunkSamples);
+
+            if (!n.isRest && overlapStart < overlapEnd) {
+                for (int s = overlapStart; s < overlapEnd; s++) {
+                    int i = s - startSample; // index in chunk
+                    double t = (double) s / sampleRate;
+
+                    double sum = 0;
+                    for (int midi : n.midiNotes) {
+                        double freq = midiToFreq(midi);
+                        sum += Math.sin(2.0 * Math.PI * freq * t);
+                    }
+
+                    // 正規化
+                    sum /= n.midiNotes.length;
+
+                    short sVal = (short) (sum * 32767);
+
+                    int mixed = pcm[i] + sVal;
+                    if (mixed > 32767) mixed = 32767;
+                    if (mixed < -32768) mixed = -32768;
+                    pcm[i] = (short) mixed;
+                }
+            }
+
+            curSampleIndex += noteSamples;
+            if (curSampleIndex >= startSample + chunkSamples) break;
+        }
+
+        return pcm;
+    }
 }

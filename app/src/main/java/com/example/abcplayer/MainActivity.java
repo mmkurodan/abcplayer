@@ -135,22 +135,22 @@ public class MainActivity extends Activity {
 
                 runOnUiThread(() -> txtStatus.append(sbRender.toString()));
 
-                // ★ PCM 生成
+                // ★ PCM 生成（ストリーミング）
                 double tempo = score.header.tempoBpm;
                 double defaultLen = score.header.defaultNoteLength;
-
-                pcm = SineWaveSynth.generatePcm(
-                        notes,
-                        44100,
-                        tempo,
-                        defaultLen
-                );
+                int sampleRate = 44100;
+                double secPerBeat = 60.0 / tempo;
+                // 合計サンプル数を計算
+                int totalSamples = 0;
+                for (NoteEvent n : notes) {
+                    double seconds = n.beats * secPerBeat;
+                    totalSamples += (int) (seconds * sampleRate);
+                }
 
                 if (isCancelled()) {
                     return "キャンセルされました";
                 }
 
-                int sampleRate = 44100;
                 int channelConfig = AudioFormat.CHANNEL_OUT_MONO;
                 int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
 
@@ -159,6 +159,9 @@ public class MainActivity extends Activity {
                         channelConfig,
                         audioFormat
                 );
+
+                // チャンクサイズ（フレーム数）
+                int chunkSamples = Math.max(1024, minBufferSize / 2);
 
                 audioTrack = new AudioTrack.Builder()
                         .setAudioAttributes(
@@ -174,14 +177,12 @@ public class MainActivity extends Activity {
                                         .setChannelMask(channelConfig)
                                         .build()
                         )
-                        .setBufferSizeInBytes(Math.max(minBufferSize, pcm.length * 2))
-                        .setTransferMode(AudioTrack.MODE_STATIC)
+                        .setBufferSizeInBytes(Math.max(minBufferSize, chunkSamples * 2))
+                        .setTransferMode(AudioTrack.MODE_STREAM)
                         .build();
 
-                audioTrack.write(pcm, 0, pcm.length);
-
-                // ★ 再生終了位置は pcm.length（重要）
-                audioTrack.setNotificationMarkerPosition(pcm.length);
+                // 再生終了位置（フレーム）
+                audioTrack.setNotificationMarkerPosition(totalSamples);
 
                 audioTrack.setPlaybackPositionUpdateListener(
                         new AudioTrack.OnPlaybackPositionUpdateListener() {
@@ -196,6 +197,25 @@ public class MainActivity extends Activity {
                 );
 
                 audioTrack.play();
+
+                // チャンク単位で合成・書き込み
+                int written = 0;
+                while (written < totalSamples) {
+                    if (isCancelled()) {
+                        return "キャンセルされました";
+                    }
+                    int toWrite = Math.min(chunkSamples, totalSamples - written);
+                    short[] chunk = SineWaveSynth.generatePcmChunk(
+                            notes,
+                            sampleRate,
+                            tempo,
+                            defaultLen,
+                            written,
+                            toWrite
+                    );
+                    audioTrack.write(chunk, 0, toWrite);
+                    written += toWrite;
+                }
 
                 return "再生中";
 
