@@ -36,11 +36,19 @@ public class AbcTokenizer {
             }
 
             // ------------------------------------
-            // 小節線 | は無視
+            // 小節線 | とリピート |: の処理
             // ------------------------------------
             if (c == '|') {
-                i++;
-                continue;
+                if (i + 1 < src.length() && src.charAt(i + 1) == ':') {
+                    tokens.add(new Token("|:"));
+                    i += 2;
+                    continue;
+                } else {
+                    // 単純な小節線はトークン化しておく（将来的な拡張のため）
+                    tokens.add(new Token("|"));
+                    i++;
+                    continue;
+                }
             }
 
             // ------------------------------------
@@ -59,9 +67,25 @@ public class AbcTokenizer {
 
             // ------------------------------------
             // ★ ヘッダ (X:, T:, M:, L:, Q:, K:) の処理
+            // さらにボルタ表記の "(1" や "(2" を単独トークンとして扱う
             // ------------------------------------
             if (i + 1 < src.length() && src.charAt(i + 1) == ':') {
                 String header = "" + c + ":";
+
+                // (1: のような形式はヘッダ扱いされるが、ボルタの (1 をトークン化しておく
+                if (c == '(') {
+                    // '(' の直後に数字が続く場合、(n をトークンとして扱う
+                    int j = i + 1;
+                    String num = "";
+                    j++; // skip ':'
+                    while (j < src.length() && Character.isDigit(src.charAt(j))) { num += src.charAt(j); j++; }
+                    if (!num.isEmpty()) {
+                        tokens.add(new Token("(" + num));
+                        i = j;
+                        continue;
+                    }
+                }
+
                 tokens.add(new Token(header));
                 i += 2;
 
