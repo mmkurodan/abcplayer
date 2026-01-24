@@ -43,12 +43,33 @@ public class AbcTokenizer {
                     tokens.add(new Token("|:"));
                     i += 2;
                     continue;
+                } else if (i + 1 < src.length() && src.charAt(i + 1) == '|') {
+                    // treat || as a single bar for now
+                    tokens.add(new Token("||"));
+                    i += 2;
+                    continue;
                 } else {
+                    // check for :| pattern where ':' precedes '|'
+                    // if previous char is ':' then we want ':|' token. However tokenizer moves forward only,
+                    // so also handle ':|' here by peeking next char (rare case when ':' appears before '|')
+                    if (i > 0 && src.charAt(i - 1) == ':') {
+                        tokens.add(new Token(":|"));
+                        i++;
+                        continue;
+                    }
+
                     // 単純な小節線はトークン化しておく（将来的な拡張のため）
                     tokens.add(new Token("|"));
                     i++;
                     continue;
                 }
+            }
+
+            // 直後に | が来て :| を形成するケースを補完（別ループでは検出しにくい）
+            if (c == ':' && i + 1 < src.length() && src.charAt(i + 1) == '|') {
+                tokens.add(new Token(":|"));
+                i += 2;
+                continue;
             }
 
             // ------------------------------------
