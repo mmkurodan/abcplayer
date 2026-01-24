@@ -17,6 +17,12 @@ public class AbcParser {
     private double defaultNoteLength = 1.0;
     private double tempoBpm = 120.0;
 
+    // per-parse working state
+    private Map<String, List<String>> lyricsByVoice;
+    private List<String> pendingOrnaments;
+    private List<String> pendingDecorations;
+    private boolean inGrace = false;
+
     private static class RepeatState {
         boolean inRepeat = false;
         int repeatStart = -1;
@@ -27,6 +33,10 @@ public class AbcParser {
         int secondEndingStart = -1;
     }
 
+    private static class SlurState {
+        int depth = 0;
+    }
+
     public Score parseScore(String src) {
         score = new Score();
         currentVoice = "1";
@@ -34,8 +44,14 @@ public class AbcParser {
         List<AbcTokenizer.Token> tokens = tokenizer.tokenize(src);
         int i = 0;
 
-        // ボイスごとのリピート状態を保持
+        // ボイスごとのリピート状態・スラー状態を保持
         Map<String, RepeatState> repeatStates = new HashMap<>();
+        Map<String, SlurState> slurStates = new HashMap<>();
+
+        // 歌詞バッファ (w:)
+        lyricsByVoice = new HashMap<>();
+        pendingOrnaments = new ArrayList<>();
+        pendingDecorations = new ArrayList<>();
 
         while (i < tokens.size()) {
             String t = tokens.get(i).text;
@@ -43,24 +59,43 @@ public class AbcParser {
             // -----------------------------
             // ヘッダ
             // -----------------------------
+            if (t.equals("X:")) { i++; score.header.setNumber(tokens.get(i).text); i++; continue; }
+            if (t.equals("T:")) { i++; /* title ignored for now */ i++; continue; }
+            if (t.equals("C:")) { i++; score.header.setComposer(tokens.get(i).text); i++; continue; }
+            if (t.equals("P:")) { i++; score.header.setPart(tokens.get(i).text); i++; continue; }
+            if (t.equals("N:")) { i++; score.header.addNote(tokens.get(i).text); i++; continue; }
+            if (t.equals("W:")) { i++; score.header.addWordLine(tokens.get(i).text); i++; continue; }
+            if (t.equals("U:")) { 
+                i++; 
+                String def = tokens.get(i).text;
+                String[] kv = def.split("\\s+", 2);
+                if (kv.length == 2) score.header.setUserDef(kv[0], kv[1]);
+                i++; 
+                continue; 
+            }
             if (t.equals("L:")) {
                 i++;
-                // L:1/4 の場合は四分音符が基準なので 1.0 に固定
-                defaultNoteLength = 1.0;
-                score.header.defaultNoteLength = defaultNoteLength;
+                score.header.setDefaultLength(tokens.get(i).text);
+                defaultNoteLength = score.header.defaultNoteLength / (1.0 / 4.0); // normalize so quarter =1 beat
                 i++;
                 continue;
             }
             if (t.equals("Q:")) {
                 i++;
-                tempoBpm = Double.parseDouble(tokens.get(i).text);
-                score.header.tempoBpm = tempoBpm;
+                score.header.setTempo(tokens.get(i).text);
+                tempoBpm = score.header.tempoBpm;
+                i++;
+                continue;
+            }
+            if (t.equals("M:")) {
+                i++;
+                score.header.setMeter(tokens.get(i).text);
                 i++;
                 continue;
             }
             if (t.equals("K:")) {
                 i++;
-                score.header.key = tokens.get(i).text;
+                score.header.setKey(tokens.get(i).text);
                 i++;
                 continue;
             }
@@ -80,6 +115,12 @@ public class AbcParser {
             if (rs == null) {
                 rs = new RepeatState();
                 repeatStates.put(currentVoice, rs);
+            }
+
+            SlurState ss = slurStates.get(currentVoice);
+            if (ss == null) {
+                ss = new SlurState();
+                slurStates.put(currentVoice, ss);
             }
 
             // -----------------------------
@@ -168,10 +209,50 @@ public class AbcParser {
             }
 
             // -----------------------------
-            // 音符・和音・休符
+            // 音符・和音・休符・マルチメジャー休符・歌詞・装飾
             // -----------------------------
-            if (isNoteLetter(t) || t.equals("z") || t.equals("[")) {
-                i = parseElement(tokens, i);
+            if (t.equals("w:")) {
+                i++;
+                List<String> syllables = new ArrayList<>();
+                while (i < tokens.size() && !tokens.get(i).text.contains(":")) {
+                    syllables.add(tokens.get(i).text);
+                    i++;
+                }
+                lyricsByVoice.put(currentVoice, syllables);
+                continue;
+            }
+            if (t.equals("!trill!") || t.equals("!fermata!") || t.startsWith("!")) {
+                pendingDecorations.add(t);
+                i++;
+                continue;
+            }
+            if (t.equals("~") || t.equals(".") || t.equals(">") || t.equals("<")) {
+                pendingOrnaments.add(t);
+                i++;
+                continue;
+            }
+            if (t.equals("{")) { inGrace = true; i++; continue; }
+            if (t.equals("}")) { inGrace = false; i++; continue; }
+            if (isNoteLetter(t) || t.equals("z") || t.equals("[") || t.equals("Z")) {
+                i = parseElement(tokens, i, ss);
+                continue;
+            }
+
+            // スラー開始/終了 (grace start handled separately)
+            if (t.equals("(")) {
+                // could be slur or (3 etc. Already handled repeats; here treat as slur start
+                ss.depth++;
+                i++;
+                continue;
+            }
+            if (t.equals(")")) {
+                if (ss.depth > 0) ss.depth--;
+                // 直前イベントに slurEnd を付与
+                List<NoteEvent> v = score.getVoice(currentVoice);
+                if (!v.isEmpty()) {
+                    v.get(v.size() - 1).slurEnd = true;
+                }
+                i++;
                 continue;
             }
 
@@ -189,19 +270,19 @@ public class AbcParser {
     }
 
     private NoteEvent cloneNoteEvent(NoteEvent e) {
-        int[] midi = Arrays.copyOf(e.midiNotes, e.midiNotes.length);
-        return new NoteEvent(e.voiceName, midi, e.beats, e.isRest);
+        return e.copy();
     }
 
-    private int parseElement(List<AbcTokenizer.Token> tokens, int i) {
+    private int parseElement(List<AbcTokenizer.Token> tokens, int i, SlurState ss) {
         String t = tokens.get(i).text;
 
-        if (t.equals("[")) return parseChord(tokens, i);
+        if (t.equals("[")) return parseChord(tokens, i, ss);
         if (t.equals("z")) return parseRest(tokens, i);
-        return parseNote(tokens, i);
+        if (t.equals("Z")) return parseMultiRest(tokens, i);
+        return parseNote(tokens, i, ss);
     }
 
-    private int parseChord(List<AbcTokenizer.Token> tokens, int i) {
+    private int parseChord(List<AbcTokenizer.Token> tokens, int i, SlurState ss) {
         i++;
         List<Integer> midiList = new ArrayList<>();
 
@@ -251,12 +332,14 @@ public class AbcParser {
         }
 
         int[] arr = midiList.stream().mapToInt(x -> x).toArray();
-        score.getVoice(currentVoice).add(new NoteEvent(currentVoice, arr, beats, false));
+        NoteEvent ev = new NoteEvent(currentVoice, arr, beats, false);
+        applyPendingMarks(ev, ss);
+        score.getVoice(currentVoice).add(ev);
 
         return i;
     }
 
-    private int parseNote(List<AbcTokenizer.Token> tokens, int i) {
+    private int parseNote(List<AbcTokenizer.Token> tokens, int i, SlurState ss) {
         String t = tokens.get(i).text;
 
         int accidental = 0;
@@ -298,7 +381,9 @@ public class AbcParser {
             i = next[0];
         }
 
-        score.getVoice(currentVoice).add(new NoteEvent(currentVoice, new int[]{midi}, beats, false));
+        NoteEvent ev = new NoteEvent(currentVoice, new int[]{midi}, beats, false);
+        applyPendingMarks(ev, ss);
+        score.getVoice(currentVoice).add(ev);
         return i;
     }
 
@@ -350,6 +435,22 @@ public class AbcParser {
             i++;
         }
 
+        NoteEvent ev = new NoteEvent(currentVoice, new int[]{-1}, beats, true);
+        applyPendingMarks(ev, null);
+        score.getVoice(currentVoice).add(ev);
+        return i;
+    }
+
+    private int parseMultiRest(List<AbcTokenizer.Token> tokens, int i) {
+        i++;
+        double bars = 1.0;
+        if (i < tokens.size() && isLengthToken(tokens.get(i).text)) {
+            bars = Utils.parseLength(tokens.get(i).text);
+            i++;
+        }
+        // multi-measure rest: beats = bars * measure beats (meterNum/meterDen, where quarter=1)
+        double beatsPerMeasure = (score.header.meterNum * (4.0 / score.header.meterDen));
+        double beats = bars * beatsPerMeasure;
         score.getVoice(currentVoice).add(new NoteEvent(currentVoice, new int[]{-1}, beats, true));
         return i;
     }
@@ -361,5 +462,24 @@ public class AbcParser {
 
     private boolean isLengthToken(String t) {
         return t.matches("[0-9/]+");
+    }
+
+    // -------------- ornaments & grace --------------
+    private void applyPendingMarks(NoteEvent ev, SlurState ss) {
+        if (ss != null && ss.depth > 0) ev.slurStart = true;
+        // attach lyric if queued
+        List<String> syllables = lyricsByVoice.get(currentVoice);
+        if (syllables != null && !syllables.isEmpty()) {
+            ev.lyric = syllables.remove(0);
+        }
+        ev.ornaments.addAll(pendingOrnaments);
+        ev.decorations.addAll(pendingDecorations);
+        pendingOrnaments.clear();
+        pendingDecorations.clear();
+        if (inGrace) {
+            ev.isGrace = true;
+            // Grace notes often have zero time; here shrink length
+            ev.beats *= 0.25;
+        }
     }
 }

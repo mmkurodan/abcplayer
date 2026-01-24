@@ -1,6 +1,8 @@
 package com.example.abcplayer;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * 1つの音符または和音を表すイベント。
@@ -30,11 +32,38 @@ public class NoteEvent {
     /** 休符なら true */
     public boolean isRest;
 
+    /** スラーの開始/終了フラグ */
+    public boolean slurStart = false;
+    public boolean slurEnd = false;
+
+    /** 装飾・強弱記号（~ . > < など） */
+    public List<String> ornaments = new ArrayList<>();
+
+    /** !trill! などのデコレーション */
+    public List<String> decorations = new ArrayList<>();
+
+    /** グレースノートなら true */
+    public boolean isGrace = false;
+
+    /** 歌詞（w: で対応するシラブル） */
+    public String lyric = null;
+
     public NoteEvent(String voiceName, int[] midiNotes, double beats, boolean isRest) {
         this.voiceName = voiceName;
         this.midiNotes = midiNotes;
         this.beats = beats;
         this.isRest = isRest;
+    }
+
+    public NoteEvent copy() {
+        NoteEvent n = new NoteEvent(voiceName, Arrays.copyOf(midiNotes, midiNotes.length), beats, isRest);
+        n.slurStart = this.slurStart;
+        n.slurEnd = this.slurEnd;
+        n.isGrace = this.isGrace;
+        n.lyric = this.lyric;
+        n.ornaments = new ArrayList<>(this.ornaments);
+        n.decorations = new ArrayList<>(this.decorations);
+        return n;
     }
 
     @Override

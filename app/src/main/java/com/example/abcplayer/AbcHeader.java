@@ -1,5 +1,10 @@
 package com.example.abcplayer;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class AbcHeader {
 
     // 拍子 M: 例 "4/4"
@@ -15,8 +20,23 @@ public class AbcHeader {
     // キー K: 例 "C", "G", "D", "F", "Am" など
     public String key = "C";
 
+    // 作曲者 C:, 部分タイトル P:, フリーテキスト N:, 楽曲番号 X:, 楽譜行 W:, ユーザ定義 U:
+    public String composer = "";
+    public String part = "";
+    public String notes = "";
+    public String number = "";
+    public List<String> words = new ArrayList<>();
+    public Map<String, String> userDefs = new HashMap<>();
+
     public AbcHeader() {
     }
+
+    public void setNumber(String x) { number = x.trim(); }
+    public void setComposer(String c) { composer = c.trim(); }
+    public void setPart(String p) { part = p.trim(); }
+    public void addWordLine(String w) { words.add(w); }
+    public void addNote(String n) { notes = notes.isEmpty() ? n : (notes + "\n" + n); }
+    public void setUserDef(String key, String val) { userDefs.put(key, val); }
 
     public void setMeter(String m) {
         if (m.contains("/")) {

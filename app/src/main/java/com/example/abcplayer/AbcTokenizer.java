@@ -125,6 +125,35 @@ public class AbcTokenizer {
             }
 
             // ------------------------------------
+            // デコレーション !...!
+            if (c == '!') {
+                int j = i + 1;
+                while (j < src.length() && src.charAt(j) != '!') j++;
+                if (j < src.length()) {
+                    tokens.add(new Token(src.substring(i, j + 1)));
+                    i = j + 1;
+                    continue;
+                } else {
+                    tokens.add(new Token("!"));
+                    i++;
+                    continue;
+                }
+            }
+
+            // グレースノート { ... }
+            if (c == '{') { tokens.add(new Token("{")); i++; continue; }
+            if (c == '}') { tokens.add(new Token("}")); i++; continue; }
+
+            // スラー ) （(数字 は下のボルタ検出が先に処理）
+            if (c == ')') { tokens.add(new Token(")")); i++; continue; }
+
+            // 装飾記号 ~ . > <
+            if (c == '~' || c == '.' || c == '>' || c == '<') {
+                tokens.add(new Token("" + c));
+                i++;
+                continue;
+            }
+
             // 和音開始・終了
             // ------------------------------------
             if (c == '[' || c == ']') {
