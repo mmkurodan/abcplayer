@@ -20,6 +20,7 @@ import androidx.core.content.ContextCompat;
 
 import org.jtransforms.fft.DoubleFFT_1D;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -88,7 +89,7 @@ public class MainActivity extends Activity {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 startRecording();
             } else {
-                setStatusText("録音許可がありません");
+                setStatusText(");"録音許可がありま
             }
         }
     }
@@ -128,10 +129,12 @@ public class MainActivity extends Activity {
                 List<AbcTokenizer.Token> toks = tokenizer.tokenize(abc);
 
                 StringBuilder sbTok = new StringBuilder();
-                sbTok.append("=== Parse Log ===\n");
+                sbTok.append("=== Parse Log ===
+");
                 for (AbcTokenizer.Token t : toks) {
                     if (!isRecognizedToken(t.text)) {
-                        sbTok.append("Unrecognized: ").append(t.text).append("\n");
+                        sbTok.append("Unrecognized: ").append(t.text).append("
+");
                     }
                 }
                 runOnUiThread(() -> setStatusText(sbTok.toString()));
@@ -140,16 +143,21 @@ public class MainActivity extends Activity {
                 Score score = parser.parseScore(abc);
 
                 StringBuilder sb = new StringBuilder();
-                sb.append("=== Voices ===\n");
+                sb.append("=== Voices ===
+");
                 for (Map.Entry<String, List<NoteEvent>> entry : score.voices.entrySet()) {
                     sb.append("Voice: ").append(entry.getKey())
                             .append(" count=").append(entry.getValue().size())
-                            .append("\n");
+                            .append("
+");
                 }
 
                 NoteEvent[] notes = Renderer.renderToEvents(score);
-                sb.append("\n=== Rendered ===\n");
-                sb.append("events=").append(notes.length).append("\n");
+                sb.append("
+=== Rendered ===
+");
+                sb.append("events=").append(notes.length).append("
+");
                 runOnUiThread(() -> appendStatus(sb.toString()));
 
                 double tempo = score.header.tempoBpm;
@@ -162,7 +170,7 @@ public class MainActivity extends Activity {
                     totalSamples += (int) (seconds * sampleRate);
                 }
 
-                if (isCancelled()) return "キャンセルされました";
+                if (isCancelled()) return "キャンセル";
 
                 int channelConfig = AudioFormat.CHANNEL_OUT_MONO;
                 int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
@@ -187,7 +195,8 @@ public class MainActivity extends Activity {
                 audioTrack.setPlaybackPositionUpdateListener(new AudioTrack.OnPlaybackPositionUpdateListener() {
                     @Override
                     public void onMarkerReached(AudioTrack track) {
-                        runOnUiThread(() -> appendStatus("\n再生終了"));
+                        runOnUiThread(() -> appendStatus("
+再生終了"));
                     }
                     @Override
                     public void onPeriodicNotification(AudioTrack track) {}
@@ -197,7 +206,7 @@ public class MainActivity extends Activity {
 
                 int written = 0;
                 while (written < totalSamples) {
-                    if (isCancelled()) return "キャンセルされました";
+                    if (isCancelled()) return "キャンセルされ";
                     int toWrite = Math.min(chunkSamples, totalSamples - written);
                     short[] chunk = SineWaveSynth.generatePcmChunk(notes, sampleRate, tempo, defaultLen, written, toWrite);
                     audioTrack.write(chunk, 0, toWrite);
@@ -220,29 +229,42 @@ public class MainActivity extends Activity {
         }
     }
 
-    // MVP: 録音開始〜停止まで、ピークを音量閾値で可変抽出（最大4）、簡易 ABC を組み立てる（BPM 仮固定 120）
+    // 録音: 窓関数+ノイズフロア閾値+倍音抑制+時間的スムージングでABC生成（BPM仮固定120）
     private class RecordTask extends AsyncTask<Void, String, String> {
         private static final int SAMPLE_RATE = 44100;
         private static final int FFT_SIZE = 2048;
         private static final int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO;
         private static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
-        private static final int MAX_PEAKS = 4; // 最大ピーク数
-        private static final double BPM = 120.0; // 仮固最大ピーク最大ピーク数数
+        private static final int MAX_PEAKS = 4;
+        private static final double BPM = 120.0;
 
         private AudioRecord recorder;
         private boolean running = false;
         private long startTimeMs;
         private int bufferSize;
+        private double[] window;
+
+        // smoothing state
+        private String currentChord;
+        private int stableFrames;
+        private double currentDurationSec;
+        private long lastFrameMs;
 
         @Override
         protected void onPreExecute() {
             bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT);
             if (bufferSize < FFT_SIZE) bufferSize = FFT_SIZE;
             recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT, bufferSize);
+            window = new double[FFT_SIZE];
+            for (int i = 0; i < FFT_SIZE; i++) {
+                window[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (FFT_SIZE - 1));
+            }
             running = true;
             startTimeMs = System.currentTimeMillis();
+            lastFrameMs = startTimeMs;
             btnRecord.setText("録音停止");
-            setStatusText("録音開始...\n");
+            setStatusText("録音開始...
+");
         }
 
         @Override
@@ -251,23 +273,30 @@ public class MainActivity extends Activity {
                 short[] buffer = new short[bufferSize];
                 double[] fftInput = new double[FFT_SIZE * 2];
                 double[] spectrum = new double[FFT_SIZE];
-                long lastOnsetMs = startTimeMs;
                 StringBuilder abcBuilder = new StringBuilder();
-                abcBuilder.append("X:1\nT:Recorded\nM:4/4\nL:1/4\nQ:120\nK:C\n");
+                abcBuilder.append("X:1
+T:Recorded
+M:4/4
+L:1/4
+Q:120
+K:C
+");
 
                 recorder.startRecording();
+                currentChord = null;
+                stableFrames = 0;
+                currentDurationSec = 0.0;
 
                 while (running && !isCancelled()) {
                     int read = recorder.read(buffer, 0, buffer.length);
                     if (read <= 0) continue;
 
-                    // RMS で音量を測定
                     int len = Math.min(read, FFT_SIZE);
                     double sumSq = 0.0;
                     for (int i = 0; i < len; i++) {
                         double v = buffer[i] / 32768.0;
                         sumSq += v * v;
-                        fftInput[2 * i] = buffer[i];
+                        fftInput[2 * i] = buffer[i] * window[i];
                         fftInput[2 * i + 1] = 0;
                     }
                     for (int i = len; i < FFT_SIZE; i++) {
@@ -279,7 +308,8 @@ public class MainActivity extends Activity {
                     DoubleFFT_1D fft = new DoubleFFT_1D(FFT_SIZE);
                     fft.complexForward(fftInput);
 
-                    for (int i = 0; i < FFT_SIZE / 2; i++) {
+                    int specLen = FFT_SIZE / 2;
+                    for (int i = 0; i < specLen; i++) {
                         double re = fftInput[2 * i];
                         double im = fftInput[2 * i + 1];
                         spectrum[i] = Math.sqrt(re * re + im * im);
@@ -292,8 +322,13 @@ public class MainActivity extends Activity {
                             threshMul = Double.parseDouble(t);
                         }
                     } catch (Exception ignored) {}
-                    double magThreshold = Math.max(1e-3, rms * threshMul);
-                    int[] peakBins = findPeaks(spectrum, MAX_PEAKS, magThreshold);
+
+                    double noiseFloor = percentile(spectrum, specLen, 20.0);
+                    double magThreshold = Math.max(1e-6, noiseFloor * threshMul);
+
+                    int[] peakBins = findPeaks(spectrum, specLen, MAX_PEAKS, magThreshold);
+                    peakBins = suppressHarmonics(peakBins, SAMPLE_RATE / (double) FFT_SIZE);
+
                     double[] freqs = new double[peakBins.length];
                     for (int i = 0; i < peakBins.length; i++) {
                         freqs[i] = (double) peakBins[i] * SAMPLE_RATE / FFT_SIZE;
@@ -302,16 +337,34 @@ public class MainActivity extends Activity {
                     String chord = binsToAbc(freqs);
 
                     long now = System.currentTimeMillis();
-                    double seconds = (now - lastOnsetMs) / 1000.0;
-                    lastOnsetMs = now;
-                    double beats = secondsToBeats(seconds);
+                    double frameSeconds = (now - lastFrameMs) / 1000.0;
+                    lastFrameMs = now;
 
-                    abcBuilder.append(chord).append(lengthToToken(beats)).append(" ");
-                    publishProgress("Peak: " + chord + " beats=" + beats + " thresh=" + magThreshold);
+                    // temporal smoothing: require >=2 consecutive frames to commit
+                    if (currentChord != null && currentChord.equals(chord)) {
+                        stableFrames++;
+                        currentDurationSec += frameSeconds;
+                    } else {
+                        if (stableFrames >= 2 && currentChord != null) {
+                            double beats = secondsToBeats(currentDurationSec);
+                            abcBuilder.append(currentChord).append(lengthToToken(beats)).append(" ");
+                            publishProgress("Emit: " + currentChord + " beats=" + beats + " thresh=" + magThreshold);
+                        }
+                        currentChord = chord;
+                        stableFrames = 1;
+                        currentDurationSec = frameSeconds;
+                    }
+
+                    publishProgress("Frame: " + chord + " rms=" + rms + " thresh=" + magThreshold);
                 }
 
                 recorder.stop();
                 recorder.release();
+
+                if (currentChord != null && stableFrames >= 1) {
+                    double beats = secondsToBeats(currentDurationSec);
+                    abcBuilder.append(currentChord).append(lengthToToken(beats)).append(" ");
+                }
 
                 return abcBuilder.toString();
             } catch (Exception e) {
@@ -322,7 +375,8 @@ public class MainActivity extends Activity {
 
         @Override
         protected void onProgressUpdate(String... values) {
-            appendStatus(values[0] + "\n");
+            appendStatus(values[0] + "
+");
         }
 
         @Override
@@ -330,23 +384,25 @@ public class MainActivity extends Activity {
             btnRecord.setText("録音");
             recordTask = null;
             editAbc.setText(result.trim());
-            appendStatus("録音完了\n");
+            appendStatus("録音完了
+");
         }
 
         @Override
         protected void onCancelled(String result) {
             btnRecord.setText("録音");
             recordTask = null;
-            appendStatus("録音キャンセル\n");
+            appendStatus("録音キャンセル
+");
         }
 
         void stopRecording() { running = false; }
 
-        private int[] findPeaks(double[] spectrum, int maxCount, double threshold) {
+        private int[] findPeaks(double[] spectrum, int len, int maxCount, double threshold) {
             int[] bins = new int[maxCount];
             double[] mags = new double[maxCount];
             int found = 0;
-            for (int i = 1; i < spectrum.length - 1; i++) { // exclude DC/nyquist
+            for (int i = 1; i < len - 1; i++) { // exclude DC/nyquist
                 double m = spectrum[i];
                 if (m < threshold) continue;
                 for (int k = 0; k < maxCount; k++) {
@@ -363,15 +419,51 @@ public class MainActivity extends Activity {
                 }
             }
             if (found == 0) {
-                // fallback: pick strongest bin regardless of threshold
                 double maxM = -1; int maxI = 0;
-                for (int i = 1; i < spectrum.length - 1; i++) {
+                for (int i = 1; i < len - 1; i++) {
                     if (spectrum[i] > maxM) { maxM = spectrum[i]; maxI = i; }
                 }
                 bins[0] = maxI;
                 found = 1;
             }
             return Arrays.copyOf(bins, found);
+        }
+
+        private int[] suppressHarmonics(int[] bins, double binResHz) {
+            List<Integer> kept = new ArrayList<>();
+            for (int bin : bins) {
+                double f = bin * binResHz;
+                boolean skip = false;
+                for (int base : kept) {
+                    double fb = base * binResHz;
+                    double ratio = f / fb;
+                    double nearest = Math.round(ratio);
+                    if (nearest >= 2 && nearest <= 4 && Math.abs(ratio - nearest) < 0.05) {
+                        skip = true;
+                        break;
+                    }
+                    if (Math.abs(bin - base) <= 1) { // cluster close peaks
+                        skip = true;
+                        break;
+                    }
+                }
+                if (!skip) kept.add(bin);
+            }
+            int[] result = new int[kept.size()];
+            for (int i = 0; i < kept.size(); i++) result[i] = kept.get(i);
+            return result;
+        }
+
+        private double percentile(double[] arr, int len, double p) {
+            double[] copy = Arrays.copyOf(arr, len);
+            Arrays.sort(copy);
+            if (len == 0) return 0;
+            double rank = (p / 100.0) * (len - 1);
+            int low = (int) Math.floor(rank);
+            int high = (int) Math.ceil(rank);
+            if (low == high) return copy[low];
+            double weight = rank - low;
+            return copy[low] * (1 - weight) + copy[high] * weight;
         }
 
         private String binsToAbc(double[] freqs) {
@@ -433,10 +525,10 @@ public class MainActivity extends Activity {
         if ("|:".equals(t) || ":|".equals(t) || "||".equals(t) || "|".equals(t)) return true;
         if (t.startsWith("V:") || t.startsWith("K:") || t.startsWith("M:") || t.startsWith("L:") || t.startsWith("Q:") || t.startsWith("X:") || t.startsWith("T:") || t.startsWith("C:") || t.startsWith("P:") || t.startsWith("N:") || t.startsWith("W:") || t.startsWith("U:") || t.startsWith("I:")) return true;
         if (t.equals("[") || t.equals("]") || t.equals("z") || t.equals("Z")) return true;
-        if (t.equals("^") || t.equals("_") || t.equals("=") || t.equals("'") || t.equals(",") || t.equals("-")) return true;
+        if (t.equals("^") || t.equals("_") || t.equals("=") || t.equals("'" ) || t.equals(",") || t.equals("-")) return true;
         if (t.equals("(") || t.equals(")")) return true;
         if (t.equals("{") || t.equals("}")) return true;
-        if (t.equals("~") || t.equals(".") || t.equals(">") || t.equals("<")) return true;
+        if (t.equals("~") || t.equals("." ) || t.equals(">") || t.equals("<")) return true;
         if (t.startsWith("!")) return true;
         if (t.matches("[0-9/]+")) return true;
         return t.length() == 1 && "ABCDEFGabcdefg".indexOf(t.charAt(0)) >= 0;
