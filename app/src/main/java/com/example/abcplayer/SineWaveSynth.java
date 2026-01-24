@@ -3,6 +3,7 @@ package com.example.abcplayer;
 /**
  * PCM 合成（簡易）。
 
+ * エンベロープはノート開始からの相対時間で計算し、曲全体が減衰し続ける問題を防ぐ。
  */
 public class SineWaveSynth {
 
@@ -28,10 +29,11 @@ public class SineWaveSynth {
             if (n.isRest) { globalSampleIndex += samples; continue; }
 
             for (int i = 0; i < samples; i++) {
-                double t = (double) (globalSampleIndex + i) / sampleRate;
+                double tAbs = (double) (globalSampleIndex + i) / sampleRate;
+                double tLocal = (double) i / sampleRate; // ノート開始からの時間
                 double sum = 0;
                 for (int midi : n.midiNotes) {
-                    sum += voiceSample(n.program, midi, t);
+                    sum += voiceSample(n.program, midi, tAbs, tLocal);
                 }
                 sum /= n.midiNotes.length;
                 short s = (short) (sum * 32767);
@@ -71,10 +73,11 @@ public class SineWaveSynth {
             if (!n.isRest && overlapStart < overlapEnd) {
                 for (int s = overlapStart; s < overlapEnd; s++) {
                     int i = s - startSample;
-                    double t = (double) s / sampleRate;
+                    double tAbs = (double) s / sampleRate;
+                    double tLocal = (double) (s - noteStart) / sampleRate;
                     double sum = 0;
                     for (int midi : n.midiNotes) {
-                        sum += voiceSample(n.program, midi, t);
+                        sum += voiceSample(n.program, midi, tAbs, tLocal);
                     }
                     sum /= n.midiNotes.length;
                     short sVal = (short) (sum * 32767);
@@ -95,29 +98,23 @@ public class SineWaveSynth {
         return 440.0 * Math.pow(2.0, (midi - 69) / 12.0);
     }
 
-    private static double voiceSample(int program, int midi, double t) {
+    private static double voiceSample(int program, int midi, double tAbs, double tLocal) {
         double freq = midiToFreq(midi);
         double omega = 2.0 * Math.PI * freq;
-        // 簡易波形マップ
         int p = program;
         if (p >= 0 && p <= 7) {
-            // Acoustic piano 系: 軽い減衰付きサイン
-            double env = Math.exp(-t * 6.0);
-            return env * Math.sin(omega * t);
+            double env = Math.exp(-tLocal * 6.0); // ピアノ系: ノート頭から減衰
+            return env * Math.sin(omega * tAbs);
         } else if (p >= 16 && p <= 23) {
-            // オルガン: 矩形に近い
-            return square(omega * t) * 0.6;
+            return square(omega * tAbs) * 0.6;
         } else if (p >= 24 && p <= 31) {
-            // ギター: 三角波
-            double env = Math.exp(-t * 4.0);
-            return env * triangle(omega * t);
+            double env = Math.exp(-tLocal * 4.0); // ギター系
+            return env * triangle(omega * tAbs);
         } else if (p >= 40 && p <= 47) {
-            // ストリングス: のこぎりに軽い減衰
-            double env = Math.exp(-t * 3.0);
-            return env * saw(omega * t) * 0.7;
+            double env = Math.exp(-tLocal * 3.0); // ストリングス系
+            return env * saw(omega * tAbs) * 0.7;
         } else {
-            // デフォルト: サイン
-            return Math.sin(omega * t);
+            return Math.sin(omega * tAbs);
         }
     }
 
