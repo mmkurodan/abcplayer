@@ -29,6 +29,7 @@ public class MainActivity extends Activity {
     private static final int REQ_RECORD = 1001;
 
     private EditText editAbc;
+    private EditText editThreshold;
     private Button btnPlay;
     private Button btnRecord;
     private TextView txtStatus;
@@ -44,6 +45,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         editAbc = findViewById(R.id.editAbc);
+        editThreshold = findViewById(R.id.editThreshold);
         btnPlay = findViewById(R.id.btnPlay);
         btnRecord = findViewById(R.id.btnRecord);
         txtStatus = findViewById(R.id.txtStatus);
@@ -283,7 +285,14 @@ public class MainActivity extends Activity {
                         spectrum[i] = Math.sqrt(re * re + im * im);
                     }
 
-                    double magThreshold = Math.max(1e-3, rms * 200.0);
+                    double threshMul = 200.0;
+                    try {
+                        String t = editThreshold.getText().toString().trim();
+                        if (!t.isEmpty()) {
+                            threshMul = Double.parseDouble(t);
+                        }
+                    } catch (Exception ignored) {}
+                    double magThreshold = Math.max(1e-3, rms * threshMul);
                     int[] peakBins = findPeaks(spectrum, MAX_PEAKS, magThreshold);
                     double[] freqs = new double[peakBins.length];
                     for (int i = 0; i < peakBins.length; i++) {

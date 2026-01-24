@@ -34,6 +34,15 @@
             android:text="録音" />
     </LinearLayout>
 
+    <EditText
+        android:id="@+id/editThreshold"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:hint="閾値倍率 (例:200)"
+        android:inputType="numberDecimal"
+        android:text="200" />
+
     <ScrollView
         android:id="@+id/scrollStatus"
         android:layout_width="match_parent"
