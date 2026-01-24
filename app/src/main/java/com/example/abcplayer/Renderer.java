@@ -23,16 +23,20 @@ public class Renderer {
             return new NoteEvent[0];
         }
 
-        // ----------------------------------------
         // 1. 各ボイスの「音符境界（累積拍位置）」を計算
-        // ----------------------------------------
         List<List<Span>> voiceSpans = new ArrayList<>();
 
-        for (List<NoteEvent> list : voices.values()) {
+        for (Map.Entry<String, List<NoteEvent>> entry : voices.entrySet()) {
+            String voiceName = entry.getKey();
+            List<NoteEvent> list = entry.getValue();
+            int program = score.header.getProgram(voiceName);
+
             List<Span> spans = new ArrayList<>();
             double pos = 0;
 
             for (NoteEvent e : list) {
+                // program をボイス設定で上書き
+                e.program = program;
                 spans.add(new Span(pos, pos + e.beats, e));
                 pos += e.beats;
             }
@@ -40,23 +44,17 @@ public class Renderer {
             voiceSpans.add(spans);
         }
 
-        // ----------------------------------------
-        // 2. 全ボイスの境界を統合して「全体の区間」を作る
-        // ----------------------------------------
+        // 2. 全ボイスの境界を統合
         List<Double> boundaries = new ArrayList<>();
-
         for (List<Span> spans : voiceSpans) {
             for (Span s : spans) {
                 if (!containsApprox(boundaries, s.start)) boundaries.add(s.start);
-                if (!containsApprox(boundaries, s.end))   boundaries.add(s.end);
+                if (!containsApprox(boundaries, s.end)) boundaries.add(s.end);
             }
         }
-
         boundaries.sort(Double::compare);
 
-        // ----------------------------------------
-        // 3. 各区間ごとに「その区間で鳴っている音」を集めて和音化
-        // ----------------------------------------
+        // 3. 各区間で鳴っている音を集めて和音化
         List<NoteEvent> mixed = new ArrayList<>();
 
         for (int i = 0; i < boundaries.size() - 1; i++) {
@@ -65,18 +63,17 @@ public class Renderer {
             double duration = end - start;
 
             List<Integer> activeNotes = new ArrayList<>();
+            List<Integer> activePrograms = new ArrayList<>();
 
-            // 各ボイスの該当区間の音を探す
             for (List<Span> spans : voiceSpans) {
                 for (Span s : spans) {
-
-                    // start がこの Span に含まれているか？
                     if (start >= s.start - EPS && start < s.end - EPS) {
-
                         if (!s.event.isRest) {
                             for (int m : s.event.midiNotes) {
                                 if (m >= 0) activeNotes.add(m);
                             }
+                            // program を覚えて代表値として使う（単純に最初のものを採用）
+                            if (!activePrograms.contains(s.event.program)) activePrograms.add(s.event.program);
                         }
                         break;
                     }
@@ -87,12 +84,12 @@ public class Renderer {
                 mixed.add(new NoteEvent("mix", new int[]{-1}, duration, true));
             } else {
                 int[] arr = activeNotes.stream().mapToInt(x -> x).toArray();
-                mixed.add(new NoteEvent("mix", arr, duration, false));
+                NoteEvent ev = new NoteEvent("mix", arr, duration, false);
+                ev.program = activePrograms.isEmpty() ? 0 : activePrograms.get(0);
+                mixed.add(ev);
             }
         }
 
-        // ★★★ 最重要ポイント ★★★
-        // 元のイベントは絶対に返さない
         return mixed.toArray(new NoteEvent[0]);
     }
 

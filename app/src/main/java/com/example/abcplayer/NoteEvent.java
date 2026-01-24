@@ -7,16 +7,8 @@ import java.util.List;
 /**
  * 1つの音符または和音を表すイベント。
  *
- * 標準 ABC Notation の複数ボイス対応のため、
- * voiceName を追加している。
- *
- * midiNotes:
- *   - 単音なら 1 要素
- *   - 和音なら複数要素
- *
- * beats:
- *   - L: と Q: を適用した後の「拍数」
- *   - Synth 側では beats * (60 / tempoBpm) で秒に変換する
+ * 標準 ABC Notation の複数ボイス対応のため、voiceName を持つ。
+ * 楽器切り替え対応のprogram を追加（General MIDI の program number を想定）。
  */
 public class NoteEvent {
 
@@ -48,6 +40,9 @@ public class NoteEvent {
     /** 歌詞（w: で対応するシラブル） */
     public String lyric = null;
 
+    /** 楽器 (program number) */
+    public int program = 0;
+
     public NoteEvent(String voiceName, int[] midiNotes, double beats, boolean isRest) {
         this.voiceName = voiceName;
         this.midiNotes = midiNotes;
@@ -63,6 +58,7 @@ public class NoteEvent {
         n.lyric = this.lyric;
         n.ornaments = new ArrayList<>(this.ornaments);
         n.decorations = new ArrayList<>(this.decorations);
+        n.program = this.program;
         return n;
     }
 
@@ -73,6 +69,7 @@ public class NoteEvent {
                 ", midi=" + Arrays.toString(midiNotes) +
                 ", beats=" + beats +
                 ", rest=" + isRest +
+                ", program=" + program +
                 '}';
     }
 }

@@ -28,15 +28,11 @@ public class AbcHeader {
     public List<String> words = new ArrayList<>();
     public Map<String, String> userDefs = new HashMap<>();
 
+    // Voiceごとのプログラム (General MIDI program number)。未指定は 0 (Acoustic Grand)
+    public Map<String, Integer> programByVoice = new HashMap<>();
+
     public AbcHeader() {
     }
-
-    public void setNumber(String x) { number = x.trim(); }
-    public void setComposer(String c) { composer = c.trim(); }
-    public void setPart(String p) { part = p.trim(); }
-    public void addWordLine(String w) { words.add(w); }
-    public void addNote(String n) { notes = notes.isEmpty() ? n : (notes + "\n" + n); }
-    public void setUserDef(String key, String val) { userDefs.put(key, val); }
 
     public void setMeter(String m) {
         if (m.contains("/")) {
@@ -58,10 +54,27 @@ public class AbcHeader {
         if (q.contains("=")) {
             String[] parts = q.split("=");
             tempoBpm = Double.parseDouble(parts[1]);
+        } else {
+            tempoBpm = Double.parseDouble(q.trim());
         }
     }
 
     public void setKey(String k) {
         key = k.trim();
+    }
+
+    public void setNumber(String x) { number = x.trim(); }
+    public void setComposer(String c) { composer = c.trim(); }
+    public void setPart(String p) { part = p.trim(); }
+    public void addWordLine(String w) { words.add(w); }
+    public void addNote(String n) { notes = notes.isEmpty() ? n : (notes + "\n" + n); }
+    public void setUserDef(String key, String val) { userDefs.put(key, val); }
+
+    public void setProgram(String voice, int program) {
+        programByVoice.put(voice, program);
+    }
+
+    public int getProgram(String voice) {
+        return programByVoice.getOrDefault(voice, 0);
     }
 }

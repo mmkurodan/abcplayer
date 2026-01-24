@@ -9,11 +9,11 @@ import java.util.Map;
  * 標準 ABC Notation の複数ボイス対応のためのトップレベル構造。
  *
  * Score
- *  ├─ header : AbcHeader
+ header : AbcHeader *  ├
  *  └─ voices : Map<String, List<NoteEvent>>
  *
  * voices は LinkedHashMap を使うことで、
- * V:1 → V:2 → V:3 のように宣言順を保持する。
+Echo
  */
 public class Score {
 
