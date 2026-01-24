@@ -8,6 +8,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import java.util.Arrays;
@@ -19,6 +20,7 @@ public class MainActivity extends Activity {
     private EditText editAbc;
     private Button btnPlay;
     private TextView txtStatus;
+    private ScrollView scrollStatus;
 
     private AudioTrack audioTrack;
     private PlayTask currentTask;
@@ -31,6 +33,7 @@ public class MainActivity extends Activity {
         editAbc = findViewById(R.id.editAbc);
         btnPlay = findViewById(R.id.btnPlay);
         txtStatus = findViewById(R.id.txtStatus);
+        scrollStatus = findViewById(R.id.scrollStatus);
 
         btnPlay.setOnClickListener(v -> onPlayClicked());
     }
@@ -79,68 +82,42 @@ public class MainActivity extends Activity {
             String abc = params[0];
 
             try {
-                // ★ Tokenizer の結果を表示
                 AbcTokenizer tokenizer = new AbcTokenizer();
                 List<AbcTokenizer.Token> toks = tokenizer.tokenize(abc);
 
+                // トークン表示は中止: 代わりに解釈できないトークンを抽出
                 StringBuilder sbTok = new StringBuilder();
-                sbTok.append("=== Tokenizer ===\n");
+                sbTok.append("=== Parse Log ===\n");
                 for (AbcTokenizer.Token t : toks) {
-                    sbTok.append(t.text).append("\n");
+                    if (!isRecognizedToken(t.text)) {
+                        sbTok.append("Unrecognized: ").append(t.text).append("\n");
+                    }
                 }
+                runOnUiThread(() -> setStatusText(sbTok.toString()));
 
-                runOnUiThread(() -> txtStatus.setText(sbTok.toString()));
-
-                // ★ Score の解析
                 AbcParser parser = new AbcParser();
                 Score score = parser.parseScore(abc);
 
-                // ★ Score.voices のログ出力
-                StringBuilder sbVoices = new StringBuilder();
-                sbVoices.append("\n=== Score.voices ===\n");
-
+                // Score/Render ログ
+                StringBuilder sb = new StringBuilder();
+                sb.append("=== Voices ===\n");
                 for (Map.Entry<String, List<NoteEvent>> entry : score.voices.entrySet()) {
-                    sbVoices.append("Voice: ").append(entry.getKey())
-                            .append("  count=").append(entry.getValue().size())
+                    sb.append("Voice: ").append(entry.getKey())
+                            .append(" count=").append(entry.getValue().size())
                             .append("\n");
-
-                    for (NoteEvent e : entry.getValue()) {
-                        sbVoices.append("  beats=")
-                                .append(e.beats)
-                                .append(" midi=")
-                                .append(Arrays.toString(e.midiNotes))
-                                .append(" rest=")
-                                .append(e.isRest)
-                                .append("\n");
-                    }
                 }
 
-                runOnUiThread(() -> txtStatus.append(sbVoices.toString()));
-
-                // ★ Renderer の出力
                 NoteEvent[] notes = Renderer.renderToEvents(score);
+                sb.append("\n=== Rendered ===\n");
+                sb.append("events=").append(notes.length).append("\n");
 
-                StringBuilder sbRender = new StringBuilder();
-                sbRender.append("\n=== Rendered Events ===\n");
+                runOnUiThread(() -> appendStatus(sb.toString()));
 
-                for (NoteEvent n : notes) {
-                    sbRender.append("beats=")
-                            .append(n.beats)
-                            .append(" midi=")
-                            .append(Arrays.toString(n.midiNotes))
-                            .append(" rest=")
-                            .append(n.isRest)
-                            .append("\n");
-                }
-
-                runOnUiThread(() -> txtStatus.append(sbRender.toString()));
-
-                // ★ PCM 生成（ストリーミング）
+                // PCM 生成
                 double tempo = score.header.tempoBpm;
                 double defaultLen = score.header.defaultNoteLength;
                 int sampleRate = 44100;
                 double secPerBeat = 60.0 / tempo;
-                // 合計サンプル数を計算
                 int totalSamples = 0;
                 for (NoteEvent n : notes) {
                     double seconds = n.beats * secPerBeat;
@@ -153,14 +130,7 @@ public class MainActivity extends Activity {
 
                 int channelConfig = AudioFormat.CHANNEL_OUT_MONO;
                 int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
-
-                int minBufferSize = AudioTrack.getMinBufferSize(
-                        sampleRate,
-                        channelConfig,
-                        audioFormat
-                );
-
-                // チャンクサイズ（フレーム数）
+                int minBufferSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, audioFormat);
                 int chunkSamples = Math.max(1024, minBufferSize / 2);
 
                 audioTrack = new AudioTrack.Builder()
@@ -181,38 +151,25 @@ public class MainActivity extends Activity {
                         .setTransferMode(AudioTrack.MODE_STREAM)
                         .build();
 
-                // 再生終了位置（フレーム）
                 audioTrack.setNotificationMarkerPosition(totalSamples);
-
-                audioTrack.setPlaybackPositionUpdateListener(
-                        new AudioTrack.OnPlaybackPositionUpdateListener() {
-                            @Override
-                            public void onMarkerReached(AudioTrack track) {
-                                runOnUiThread(() -> txtStatus.append("\n再生終了"));
-                            }
-
-                            @Override
-                            public void onPeriodicNotification(AudioTrack track) {}
-                        }
-                );
+                audioTrack.setPlaybackPositionUpdateListener(new AudioTrack.OnPlaybackPositionUpdateListener() {
+                    @Override
+                    public void onMarkerReached(AudioTrack track) {
+                        runOnUiThread(() -> appendStatus("\n再生終了"));
+                    }
+                    @Override
+                    public void onPeriodicNotification(AudioTrack track) {}
+                });
 
                 audioTrack.play();
 
-                // チャンク単位で合成・書き込み
                 int written = 0;
                 while (written < totalSamples) {
                     if (isCancelled()) {
                         return "キャンセルされました";
                     }
                     int toWrite = Math.min(chunkSamples, totalSamples - written);
-                    short[] chunk = SineWaveSynth.generatePcmChunk(
-                            notes,
-                            sampleRate,
-                            tempo,
-                            defaultLen,
-                            written,
-                            toWrite
-                    );
+                    short[] chunk = SineWaveSynth.generatePcmChunk(notes, sampleRate, tempo, defaultLen, written, toWrite);
                     audioTrack.write(chunk, 0, toWrite);
                     written += toWrite;
                 }
@@ -230,7 +187,35 @@ public class MainActivity extends Activity {
 
         @Override
         protected void onCancelled(String result) {
-            txtStatus.setText("キャンセル");
+            setStatusText("キャンセル");
         }
+    }
+
+    private boolean isRecognizedToken(String t) {
+        if (t == null || t.isEmpty()) return false;
+        if ("|:".equals(t) || ":|".equals(t) || "||".equals(t) || "|".equals(t)) return true;
+        if (t.startsWith("V:") || t.startsWith("K:") || t.startsWith("M:") || t.startsWith("L:") || t.startsWith("Q:") || t.startsWith("X:") || t.startsWith("T:") || t.startsWith("C:") || t.startsWith("P:") || t.startsWith("N:") || t.startsWith("W:") || t.startsWith("U:") || t.startsWith("I:")) return true;
+        if (t.equals("[") || t.equals("]") || t.equals("z") || t.equals("Z")) return true;
+        if (t.equals("^") || t.equals("_") || t.equals("=") || t.equals("'") || t.equals(",") || t.equals("-")) return true;
+        if (t.equals("(") || t.equals(")")) return true;
+        if (t.equals("{") || t.equals("}")) return true;
+        if (t.equals("~") || t.equals(".") || t.equals(">") || t.equals("<")) return true;
+        if (t.startsWith("!")) return true;
+        if (t.matches("[0-9/]+")) return true;
+        return t.length() == 1 && "ABCDEFGabcdefg".indexOf(t.charAt(0)) >= 0;
+    }
+
+    private void setStatusText(String text) {
+        txtStatus.setText(text);
+        scrollToBottom();
+    }
+
+    private void appendStatus(String text) {
+        txtStatus.append(text);
+        scrollToBottom();
+    }
+
+    private void scrollToBottom() {
+        scrollStatus.post(() -> scrollStatus.fullScroll(ScrollView.FOCUS_DOWN));
     }
 }
