@@ -89,7 +89,7 @@ public class MainActivity extends Activity {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 startRecording();
             } else {
-                setStatusText(");"録音許可がありま
+                setStatusText("録音許可がありません");
             }
         }
     }
@@ -129,12 +129,10 @@ public class MainActivity extends Activity {
                 List<AbcTokenizer.Token> toks = tokenizer.tokenize(abc);
 
                 StringBuilder sbTok = new StringBuilder();
-                sbTok.append("=== Parse Log ===
-");
+                sbTok.append("=== Parse Log ===\n");
                 for (AbcTokenizer.Token t : toks) {
                     if (!isRecognizedToken(t.text)) {
-                        sbTok.append("Unrecognized: ").append(t.text).append("
-");
+                        sbTok.append("Unrecognized: ").append(t.text).append("\n");
                     }
                 }
                 runOnUiThread(() -> setStatusText(sbTok.toString()));
@@ -143,21 +141,16 @@ public class MainActivity extends Activity {
                 Score score = parser.parseScore(abc);
 
                 StringBuilder sb = new StringBuilder();
-                sb.append("=== Voices ===
-");
+                sb.append("=== Voices ===\n");
                 for (Map.Entry<String, List<NoteEvent>> entry : score.voices.entrySet()) {
                     sb.append("Voice: ").append(entry.getKey())
                             .append(" count=").append(entry.getValue().size())
-                            .append("
-");
+                            .append("\n");
                 }
 
                 NoteEvent[] notes = Renderer.renderToEvents(score);
-                sb.append("
-=== Rendered ===
-");
-                sb.append("events=").append(notes.length).append("
-");
+                sb.append("\n=== Rendered ===\n");
+                sb.append("events=").append(notes.length).append("\n");
                 runOnUiThread(() -> appendStatus(sb.toString()));
 
                 double tempo = score.header.tempoBpm;
@@ -195,8 +188,7 @@ public class MainActivity extends Activity {
                 audioTrack.setPlaybackPositionUpdateListener(new AudioTrack.OnPlaybackPositionUpdateListener() {
                     @Override
                     public void onMarkerReached(AudioTrack track) {
-                        runOnUiThread(() -> appendStatus("
-再生終了"));
+                        runOnUiThread(() -> appendStatus("\n再生終了"));
                     }
                     @Override
                     public void onPeriodicNotification(AudioTrack track) {}
@@ -229,7 +221,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    // 録音: 窓関数+ノイズフロア閾値+倍音抑制+時間的スムージングでABC生成（BPM仮固定120）
+    // 録音: +倍音抑制+時間的スムージングでABC生成（BPM仮固定120）窓関数+ノ
     private class RecordTask extends AsyncTask<Void, String, String> {
         private static final int SAMPLE_RATE = 44100;
         private static final int FFT_SIZE = 2048;
@@ -263,8 +255,7 @@ public class MainActivity extends Activity {
             startTimeMs = System.currentTimeMillis();
             lastFrameMs = startTimeMs;
             btnRecord.setText("録音停止");
-            setStatusText("録音開始...
-");
+            setStatusText("録音開始...\n");
         }
 
         @Override
@@ -274,13 +265,7 @@ public class MainActivity extends Activity {
                 double[] fftInput = new double[FFT_SIZE * 2];
                 double[] spectrum = new double[FFT_SIZE];
                 StringBuilder abcBuilder = new StringBuilder();
-                abcBuilder.append("X:1
-T:Recorded
-M:4/4
-L:1/4
-Q:120
-K:C
-");
+                abcBuilder.append("X:1\nT:Recorded\nM:4/4\nL:1/4\nQ:120\nK:C\n");
 
                 recorder.startRecording();
                 currentChord = null;
@@ -375,8 +360,7 @@ K:C
 
         @Override
         protected void onProgressUpdate(String... values) {
-            appendStatus(values[0] + "
-");
+            appendStatus(values[0] + "\n");
         }
 
         @Override
@@ -384,16 +368,14 @@ K:C
             btnRecord.setText("録音");
             recordTask = null;
             editAbc.setText(result.trim());
-            appendStatus("録音完了
-");
+            appendStatus("録音完了\n");
         }
 
         @Override
         protected void onCancelled(String result) {
             btnRecord.setText("録音");
             recordTask = null;
-            appendStatus("録音キャンセル
-");
+            appendStatus("録音キャン\n");
         }
 
         void stopRecording() { running = false; }
@@ -525,7 +507,7 @@ K:C
         if ("|:".equals(t) || ":|".equals(t) || "||".equals(t) || "|".equals(t)) return true;
         if (t.startsWith("V:") || t.startsWith("K:") || t.startsWith("M:") || t.startsWith("L:") || t.startsWith("Q:") || t.startsWith("X:") || t.startsWith("T:") || t.startsWith("C:") || t.startsWith("P:") || t.startsWith("N:") || t.startsWith("W:") || t.startsWith("U:") || t.startsWith("I:")) return true;
         if (t.equals("[") || t.equals("]") || t.equals("z") || t.equals("Z")) return true;
-        if (t.equals("^") || t.equals("_") || t.equals("=") || t.equals("'" ) || t.equals(",") || t.equals("-")) return true;
+        if (t.equals("^") || t.equals("_") || t.equals("=") || t.equals("'") || t.equals(",") || t.equals("-")) return true;
         if (t.equals("(") || t.equals(")")) return true;
         if (t.equals("{") || t.equals("}")) return true;
         if (t.equals("~") || t.equals("." ) || t.equals(">") || t.equals("<")) return true;
