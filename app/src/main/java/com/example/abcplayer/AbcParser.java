@@ -338,7 +338,7 @@ public class AbcParser {
 
     private int parseProgram(String val) {
         try {
- program として解釈
+            // program として解釈
             String[] parts = val.split("\\D+");
             for (String p : parts) {
                 if (!p.isEmpty()) return Integer.parseInt(p);
