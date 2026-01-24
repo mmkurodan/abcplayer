@@ -312,14 +312,17 @@ public class MainActivity extends Activity {
                     double magThreshold = Math.max(1e-6, noiseFloor * threshMul);
 
                     int[] peakBins = findPeaks(spectrum, specLen, MAX_PEAKS, magThreshold);
-                    peakBins = suppressHarmonics(peakBins, SAMPLE_RATE / (double) FFT_SIZE);
-
-                    double[] freqs = new double[peakBins.length];
-                    for (int i = 0; i < peakBins.length; i++) {
-                        freqs[i] = (double) peakBins[i] * SAMPLE_RATE / FFT_SIZE;
+                    String chord;
+                    if (peakBins.length == 0) {
+                        chord = "z";
+                    } else {
+                        peakBins = suppressHarmonics(peakBins, SAMPLE_RATE / (double) FFT_SIZE);
+                        double[] freqs = new double[peakBins.length];
+                        for (int i = 0; i < peakBins.length; i++) {
+                            freqs[i] = (double) peakBins[i] * SAMPLE_RATE / FFT_SIZE;
+                        }
+                        chord = binsToAbc(freqs);
                     }
-
-                    String chord = binsToAbc(freqs);
 
                     long now = System.currentTimeMillis();
                     double frameSeconds = (now - lastFrameMs) / 1000.0;
@@ -375,7 +378,7 @@ public class MainActivity extends Activity {
         protected void onCancelled(String result) {
             btnRecord.setText("録音");
             recordTask = null;
-            appendStatus("録音キャン\n");
+            appendStatus("録音キャンセル\n");
         }
 
         void stopRecording() { running = false; }
@@ -399,14 +402,6 @@ public class MainActivity extends Activity {
                         break;
                     }
                 }
-            }
-            if (found == 0) {
-                double maxM = -1; int maxI = 0;
-                for (int i = 1; i < len - 1; i++) {
-                    if (spectrum[i] > maxM) { maxM = spectrum[i]; maxI = i; }
-                }
-                bins[0] = maxI;
-                found = 1;
             }
             return Arrays.copyOf(bins, found);
         }
