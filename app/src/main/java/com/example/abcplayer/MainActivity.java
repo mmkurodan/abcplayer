@@ -218,14 +218,14 @@ public class MainActivity extends Activity {
         }
     }
 
-    // MVP: 録音開始〜停止まで、ピークから簡易 ABC を組み立てる（BPM 仮固定 120）
+    // MVP: 録音開始〜停止まで、ピークを音量閾値で可変抽出（最大4）、簡易 ABC を組み立てる（BPM 仮固定 120）
     private class RecordTask extends AsyncTask<Void, String, String> {
         private static final int SAMPLE_RATE = 44100;
         private static final int FFT_SIZE = 2048;
         private static final int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO;
         private static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
-        private static final int PEAK_COUNT = 3; // 取得ピーク数（上から順）
-        private static final double BPM = 120.0; // 仮固定テンポ推定
+        private static final int MAX_PEAKS = 4; // 最大ピーク数
+        private static final double BPM = 120.0; // 仮固最大ピーク最大ピーク数数
 
         private AudioRecord recorder;
         private boolean running = false;
@@ -240,7 +240,7 @@ public class MainActivity extends Activity {
             running = true;
             startTimeMs = System.currentTimeMillis();
             btnRecord.setText("録音停止");
-            setStatusText("録...\n");
+            setStatusText("録音開始...\n");
         }
 
         @Override
@@ -259,8 +259,12 @@ public class MainActivity extends Activity {
                     int read = recorder.read(buffer, 0, buffer.length);
                     if (read <= 0) continue;
 
+                    // RMS で音量を測定
                     int len = Math.min(read, FFT_SIZE);
+                    double sumSq = 0.0;
                     for (int i = 0; i < len; i++) {
+                        double v = buffer[i] / 32768.0;
+                        sumSq += v * v;
                         fftInput[2 * i] = buffer[i];
                         fftInput[2 * i + 1] = 0;
                     }
@@ -268,6 +272,7 @@ public class MainActivity extends Activity {
                         fftInput[2 * i] = 0;
                         fftInput[2 * i + 1] = 0;
                     }
+                    double rms = Math.sqrt(sumSq / Math.max(1, len));
 
                     DoubleFFT_1D fft = new DoubleFFT_1D(FFT_SIZE);
                     fft.complexForward(fftInput);
@@ -278,7 +283,8 @@ public class MainActivity extends Activity {
                         spectrum[i] = Math.sqrt(re * re + im * im);
                     }
 
-                    int[] peakBins = findTopPeaks(spectrum, PEAK_COUNT);
+                    double magThreshold = Math.max(1e-3, rms * 200.0);
+                    int[] peakBins = findPeaks(spectrum, MAX_PEAKS, magThreshold);
                     double[] freqs = new double[peakBins.length];
                     for (int i = 0; i < peakBins.length; i++) {
                         freqs[i] = (double) peakBins[i] * SAMPLE_RATE / FFT_SIZE;
@@ -292,7 +298,7 @@ public class MainActivity extends Activity {
                     double beats = secondsToBeats(seconds);
 
                     abcBuilder.append(chord).append(lengthToToken(beats)).append(" ");
-                    publishProgress("Peak: " + chord + " beats=" + beats);
+                    publishProgress("Peak: " + chord + " beats=" + beats + " thresh=" + magThreshold);
                 }
 
                 recorder.stop();
@@ -327,24 +333,36 @@ public class MainActivity extends Activity {
 
         void stopRecording() { running = false; }
 
-        private int[] findTopPeaks(double[] spectrum, int count) {
-            int[] bins = new int[count];
-            double[] mags = new double[count];
-            for (int i = 0; i < spectrum.length; i++) {
+        private int[] findPeaks(double[] spectrum, int maxCount, double threshold) {
+            int[] bins = new int[maxCount];
+            double[] mags = new double[maxCount];
+            int found = 0;
+            for (int i = 1; i < spectrum.length - 1; i++) { // exclude DC/nyquist
                 double m = spectrum[i];
-                for (int k = 0; k < count; k++) {
+                if (m < threshold) continue;
+                for (int k = 0; k < maxCount; k++) {
                     if (m > mags[k]) {
-                        for (int s = count - 1; s > k; s--) {
+                        for (int s = maxCount - 1; s > k; s--) {
                             mags[s] = mags[s - 1];
                             bins[s] = bins[s - 1];
                         }
                         mags[k] = m;
                         bins[k] = i;
+                        if (found < maxCount) found++;
                         break;
                     }
                 }
             }
-            return bins;
+            if (found == 0) {
+                // fallback: pick strongest bin regardless of threshold
+                double maxM = -1; int maxI = 0;
+                for (int i = 1; i < spectrum.length - 1; i++) {
+                    if (spectrum[i] > maxM) { maxM = spectrum[i]; maxI = i; }
+                }
+                bins[0] = maxI;
+                found = 1;
+            }
+            return Arrays.copyOf(bins, found);
         }
 
         private String binsToAbc(double[] freqs) {
@@ -359,9 +377,8 @@ public class MainActivity extends Activity {
         }
 
         private String freqToAbc(double freq) {
-            // 440Hz を A4 とし、最も近い 12-TET の音名（オクターブ簡易）
             int midi = (int) Math.round(69 + 12 * Math.log(freq / 440.0) / Math.log(2));
-            int octave = midi / 12 - 1; // MIDI octave
+            int octave = midi / 12 - 1;
             int pc = (midi % 12 + 12) % 12;
             String note;
             switch (pc) {
@@ -379,7 +396,6 @@ public class MainActivity extends Activity {
                 case 11: note = "B"; break;
                 default: note = "C"; break;
             }
-            // 簡易オクターブ: 中音域 C を基準に上は ' を付与、下は , を付与
             if (octave >= 5) {
                 int ups = octave - 4;
                 for (int i = 0; i < ups; i++) note += "'";
@@ -390,19 +406,16 @@ public class MainActivity extends Activity {
             return note;
         }
 
-        private double secondsToBeats(double seconds) {
-            return seconds * (BPM / 60.0);
-        }
+        private double secondsToBeats(double seconds) { return seconds * (BPM / 60.0); }
 
         private String lengthToToken(double beats) {
-            // L=1/4 前提。0.25 拍単位に丸め、代表値のみ。
-            double b = Math.round(beats * 4.0) / 4.0; // 0.25 単位
-            if (Math.abs(b - 1.0) < 1e-3) return "";    // 四分
-            if (Math.abs(b - 0.5) < 1e-3) return "/2";  // 八分
-            if (Math.abs(b - 0.25) < 1e-3) return "/4"; // 16分
-            if (Math.abs(b - 2.0) < 1e-3) return "2";   // 二分
-            if (Math.abs(b - 4.0) < 1e-3) return "4";   // 全音符
-            return ""; // その他は四分扱い
+            double b = Math.round(beats * 4.0) / 4.0; // 0.25 拍単位
+            if (Math.abs(b - 1.0) < 1e-3) return "";
+            if (Math.abs(b - 0.5) < 1e-3) return "/2";
+            if (Math.abs(b - 0.25) < 1e-3) return "/4";
+            if (Math.abs(b - 2.0) < 1e-3) return "2";
+            if (Math.abs(b - 4.0) < 1e-3) return "4";
+            return "";
         }
     }
 
