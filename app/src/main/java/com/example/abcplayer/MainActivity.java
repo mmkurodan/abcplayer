@@ -10,7 +10,6 @@ import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ScrollView;
@@ -18,6 +17,8 @@ import android.widget.TextView;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
+import org.jtransforms.fft.DoubleFFT_1D;
 
 import java.util.Arrays;
 import java.util.List;
@@ -60,7 +61,6 @@ public class MainActivity extends Activity {
         }
 
         stopCurrentPlayback();
-
         txtStatus.setText("解析・生成中...");
 
         currentTask = new PlayTask();
@@ -118,11 +118,9 @@ public class MainActivity extends Activity {
     }
 
     private class PlayTask extends AsyncTask<String, Void, String> {
-
         @Override
         protected String doInBackground(String... params) {
             String abc = params[0];
-
             try {
                 AbcTokenizer tokenizer = new AbcTokenizer();
                 List<AbcTokenizer.Token> toks = tokenizer.tokenize(abc);
@@ -150,7 +148,6 @@ public class MainActivity extends Activity {
                 NoteEvent[] notes = Renderer.renderToEvents(score);
                 sb.append("\n=== Rendered ===\n");
                 sb.append("events=").append(notes.length).append("\n");
-
                 runOnUiThread(() -> appendStatus(sb.toString()));
 
                 double tempo = score.header.tempoBpm;
@@ -163,9 +160,7 @@ public class MainActivity extends Activity {
                     totalSamples += (int) (seconds * sampleRate);
                 }
 
-                if (isCancelled()) {
-                    return "キャンセルされました";
-                }
+                if (isCancelled()) return "キャンセルされました";
 
                 int channelConfig = AudioFormat.CHANNEL_OUT_MONO;
                 int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
@@ -173,19 +168,15 @@ public class MainActivity extends Activity {
                 int chunkSamples = Math.max(1024, minBufferSize / 2);
 
                 audioTrack = new AudioTrack.Builder()
-                        .setAudioAttributes(
-                                new AudioAttributes.Builder()
-                                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                                        .build()
-                        )
-                        .setAudioFormat(
-                                new AudioFormat.Builder()
-                                        .setEncoding(audioFormat)
-                                        .setSampleRate(sampleRate)
-                                        .setChannelMask(channelConfig)
-                                        .build()
-                        )
+                        .setAudioAttributes(new AudioAttributes.Builder()
+                                .setUsage(AudioAttributes.USAGE_MEDIA)
+                                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                                .build())
+                        .setAudioFormat(new AudioFormat.Builder()
+                                .setEncoding(audioFormat)
+                                .setSampleRate(sampleRate)
+                                .setChannelMask(channelConfig)
+                                .build())
                         .setBufferSizeInBytes(Math.max(minBufferSize, chunkSamples * 2))
                         .setTransferMode(AudioTrack.MODE_STREAM)
                         .build();
@@ -204,9 +195,7 @@ public class MainActivity extends Activity {
 
                 int written = 0;
                 while (written < totalSamples) {
-                    if (isCancelled()) {
-                        return "キャンセルされました";
-                    }
+                    if (isCancelled()) return "キャンセルされました";
                     int toWrite = Math.min(chunkSamples, totalSamples - written);
                     short[] chunk = SineWaveSynth.generatePcmChunk(notes, sampleRate, tempo, defaultLen, written, toWrite);
                     audioTrack.write(chunk, 0, toWrite);
@@ -214,10 +203,9 @@ public class MainActivity extends Activity {
                 }
 
                 return "再生中";
-
             } catch (Exception e) {
                 e.printStackTrace();
-cd aide: " + e.getMessage();
+                return "エラー: " + e.getMessage();
             }
         }
 
@@ -252,7 +240,7 @@ cd aide: " + e.getMessage();
             running = true;
             startTimeMs = System.currentTimeMillis();
             btnRecord.setText("録音停止");
-            setStatusText("録音開始...\n");
+            setStatusText("録...\n");
         }
 
         @Override
@@ -281,7 +269,7 @@ cd aide: " + e.getMessage();
                         fftInput[2 * i + 1] = 0;
                     }
 
-                    org.jtransforms.fft.DoubleFFT_1D fft = new org.jtransforms.fft.DoubleFFT_1D(FFT_SIZE);
+                    DoubleFFT_1D fft = new DoubleFFT_1D(FFT_SIZE);
                     fft.complexForward(fftInput);
 
                     for (int i = 0; i < FFT_SIZE / 2; i++) {
@@ -304,7 +292,6 @@ cd aide: " + e.getMessage();
                     double beats = secondsToBeats(seconds);
 
                     abcBuilder.append(chord).append(lengthToToken(beats)).append(" ");
-
                     publishProgress("Peak: " + chord + " beats=" + beats);
                 }
 
@@ -392,7 +379,7 @@ cd aide: " + e.getMessage();
                 case 11: note = "B"; break;
                 default: note = "C"; break;
             }
-            // 簡易オクターブ: ABC では中音 C= C のまま、上は ' を付与、下は , を付与
+            // 簡易オクターブ: 中音域 C を基準に上は ' を付与、下は , を付与
             if (octave >= 5) {
                 int ups = octave - 4;
                 for (int i = 0; i < ups; i++) note += "'";
@@ -408,59 +395,14 @@ cd aide: " + e.getMessage();
         }
 
         private String lengthToToken(double beats) {
-#            // L=1/4 を前提。四捨五入し、
-.git .github app build.gradle push.sh settings.gradle ");
-            }
-            sb.append("]");
-            return sb.toString();
-        }
-
-        private String freqToAbc(double freq) {
-            // 440Hz を A4 とし、最も近い 12-TET の音名（オクターブ簡易）
-            int midi = (int) Math.round(69 + 12 * Math.log(freq / 440.0) / Math.log(2));
-            int octave = midi / 12 - 1; // MIDI octave
-            int pc = (midi % 12 + 12) % 12;
-            String note;
-            switch (pc) {
-                case 0: note = "C"; break;
-                case 1: note = "^C"; break;
-                case 2: note = "D"; break;
-                case 3: note = "^D"; break;
-                case 4: note = "E"; break;
-                case 5: note = "F"; break;
-                case 6: note = "^F"; break;
-                case 7: note = "G"; break;
-                case 8: note = "^G"; break;
-                case 9: note = "A"; break;
-                case 10: note = "^A"; break;
-                case 11: note = "B"; break;
-                default: note = "C"; break;
-            }
-            // 簡易オクターブ: ABC では中音 C= C のまま、上は ' を付与、下は , を付与
-            if (octave >= 5) {
-                int ups = octave - 4;
-                for (int i = 0; i < ups; i++) note += "'";
-            } else if (octave <= 3) {
-                int downs = 4 - octave;
-                for (int i = 0; i < downs; i++) note += ",";
-            }
-            return note;
-        }
-
-        private double secondsToBeats(double seconds) {
-            return seconds * (BPM / 60.0);
-        }
-
-        private String lengthToToken(double beats) {
-#            // L=1/4 を前提。四捨五入し、
-
-            double b = Math.round(beats * 4.0) / 4.0; // 0.25 単位に丸め
+            // L=1/4 前提。0.25 拍単位に丸め、代表値のみ。
+            double b = Math.round(beats * 4.0) / 4.0; // 0.25 単位
             if (Math.abs(b - 1.0) < 1e-3) return "";    // 四分
             if (Math.abs(b - 0.5) < 1e-3) return "/2";  // 八分
             if (Math.abs(b - 0.25) < 1e-3) return "/4"; // 16分
             if (Math.abs(b - 2.0) < 1e-3) return "2";   // 二分
             if (Math.abs(b - 4.0) < 1e-3) return "4";   // 全音符
-            return ""; // その他は四分にフォールバック
+            return ""; // その他は四分扱い
         }
     }
 
