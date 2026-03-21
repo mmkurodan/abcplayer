@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<incidents format="6" by="lint 8.2.2" type="incidents">
+
+    <incident
+        id="Autofill"
+        severity="warning"
+        message="Missing `autofillHints` attribute">
+        <fix-alternatives>
+            <fix-attribute
+                description="Set autofillHints"
+                namespace="http://schemas.android.com/apk/res/android"
+                attribute="autofillHints"
+                value=""
+                dot="0"
+                mark="0"/>
+            <fix-attribute
+                description="Set importantForAutofill=&quot;no&quot;"
+                namespace="http://schemas.android.com/apk/res/android"
+                attribute="importantForAutofill"
+                value="no"/>
+        </fix-alternatives>
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="8"
+            column="6"
+            startOffset="262"
+            endLine="8"
+            endColumn="14"
+            endOffset="270"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;ABC Notation を入力&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="13"
+            column="9"
+            startOffset="431"
+            endLine="13"
+            endColumn="40"
+            endOffset="462"/>
+    </incident>
+
+    <incident
+        id="ButtonStyle"
+        severity="warning"
+        message="Buttons in button bars should be borderless; use `style=&quot;?android:attr/buttonBarButtonStyle&quot;` (and `?android:attr/buttonBarStyle` on the parent)">
+        <fix-composite
+            description="Make borderless">
+            <fix-attribute
+                description="Set style=&quot;?android:attr/buttonBarStyle&quot;"
+                attribute="style"
+                value="?android:attr/buttonBarStyle">
+                <range
+                    file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+                    startOffset="513"
+                    endOffset="1146"/>
+            </fix-attribute>
+            <fix-attribute
+                description="Set style=&quot;?android:attr/buttonBarButtonStyle&quot;"
+                attribute="style"
+                value="?android:attr/buttonBarButtonStyle">
+                <range
+                    file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+                    startOffset="706"
+                    endOffset="910"/>
+            </fix-attribute>
+            <fix-attribute
+                description="Set style=&quot;?android:attr/buttonBarButtonStyle&quot;"
+                attribute="style"
+                value="?android:attr/buttonBarButtonStyle">
+                <range
+                    file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+                    startOffset="920"
+                    endOffset="1126"/>
+            </fix-attribute>
+        </fix-composite>
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="22"
+            column="10"
+            startOffset="707"
+            endLine="22"
+            endColumn="16"
+            endOffset="713"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;再生&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="27"
+            column="13"
+            startOffset="890"
+            endLine="27"
+            endColumn="30"
+            endOffset="907"/>
+    </incident>
+
+    <incident
+        id="ButtonStyle"
+        severity="warning"
+        message="Buttons in button bars should be borderless; use `style=&quot;?android:attr/buttonBarButtonStyle&quot;` (and `?android:attr/buttonBarStyle` on the parent)">
+        <fix-composite
+            description="Make borderless">
+            <fix-attribute
+                description="Set style=&quot;?android:attr/buttonBarStyle&quot;"
+                attribute="style"
+                value="?android:attr/buttonBarStyle">
+                <range
+                    file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+                    startOffset="513"
+                    endOffset="1146"/>
+            </fix-attribute>
+            <fix-attribute
+                description="Set style=&quot;?android:attr/buttonBarButtonStyle&quot;"
+                attribute="style"
+                value="?android:attr/buttonBarButtonStyle">
+                <range
+                    file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+                    startOffset="706"
+                    endOffset="910"/>
+            </fix-attribute>
+            <fix-attribute
+                description="Set style=&quot;?android:attr/buttonBarButtonStyle&quot;"
+                attribute="style"
+                value="?android:attr/buttonBarButtonStyle">
+                <range
+                    file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+                    startOffset="920"
+                    endOffset="1126"/>
+            </fix-attribute>
+        </fix-composite>
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="29"
+            column="10"
+            startOffset="921"
+            endLine="29"
+            endColumn="16"
+            endOffset="927"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;録音&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="34"
+            column="13"
+            startOffset="1106"
+            endLine="34"
+            endColumn="30"
+            endOffset="1123"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;テンポ (BPM)&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="47"
+            column="13"
+            startOffset="1506"
+            endLine="47"
+            endColumn="37"
+            endOffset="1530"/>
+    </incident>
+
+    <incident
+        id="Autofill"
+        severity="warning"
+        message="Missing `autofillHints` attribute">
+        <fix-alternatives>
+            <fix-attribute
+                description="Set autofillHints"
+                namespace="http://schemas.android.com/apk/res/android"
+                attribute="autofillHints"
+                value=""
+                dot="0"
+                mark="0"/>
+            <fix-attribute
+                description="Set importantForAutofill=&quot;no&quot;"
+                namespace="http://schemas.android.com/apk/res/android"
+                attribute="importantForAutofill"
+                value="no"/>
+        </fix-alternatives>
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="49"
+            column="10"
+            startOffset="1544"
+            endLine="49"
+            endColumn="18"
+            endOffset="1552"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;120&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="55"
+            column="13"
+            startOffset="1785"
+            endLine="55"
+            endColumn="31"
+            endOffset="1803"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;閾値倍率: 200&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="63"
+            column="9"
+            startOffset="2022"
+            endLine="63"
+            endColumn="33"
+            endOffset="2046"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;ステータス&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="90"
+            column="13"
+            startOffset="2890"
+            endLine="90"
+            endColumn="33"
+            endOffset="2910"/>
+    </incident>
+
+    <incident
+        id="StaticFieldLeak"
+        severity="warning"
+        message="This `AsyncTask` class should be static or leaks might occur (com.example.abcplayer.MainActivity.PlayTask)">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/abcplayer/MainActivity.java"
+            line="231"
+            column="19"
+            startOffset="7712"
+            endLine="231"
+            endColumn="27"
+            endOffset="7720"/>
+    </incident>
+
+    <incident
+        id="StaticFieldLeak"
+        severity="warning"
+        message="This `AsyncTask` class should be static or leaks might occur (com.example.abcplayer.MainActivity.AudioMonitorTask)">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/abcplayer/MainActivity.java"
+            line="334"
+            column="19"
+            startOffset="12210"
+            endLine="334"
+            endColumn="35"
+            endOffset="12226"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="String literal in `setText` can not be translated. Use Android resources instead.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/abcplayer/MainActivity.java"
+            line="129"
+            column="31"
+            startOffset="4423"
+            endLine="129"
+            endColumn="50"
+            endOffset="4442"/>
+    </incident>
+
+    <incident
+        id="OldTargetApi"
+        severity="warning"
+        message="Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the android.os.Build.VERSION_CODES javadoc for details.">
+        <fix-replace
+            description="Update targetSdkVersion to 35"
+            oldString="34"
+            replacement="35"/>
+        <location
+            file="${:app*projectDir}/build.gradle"
+            line="12"
+            column="9"
+            startOffset="205"
+            endLine="12"
+            endColumn="21"
+            endOffset="217"/>
+    </incident>
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of androidx.core:core than 1.12.0 is available: 1.18.0">
+        <fix-replace
+            description="Change to 1.18.0"
+            family="Update versions"
+            oldString="1.12.0"
+            replacement="1.18.0"/>
+        <location
+            file="${:app*projectDir}/build.gradle"
+            line="26"
+            column="20"
+            startOffset="452"
+            endLine="26"
+            endColumn="47"
+            endOffset="479"/>
+    </incident>
+
+</incidents>

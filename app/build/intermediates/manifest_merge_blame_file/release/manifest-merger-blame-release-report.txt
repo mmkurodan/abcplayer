@@ -1,0 +1,54 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.example.abcplayer"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="24"
+9        android:targetSdkVersion="34" />
+10
+11    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+11-->/root/abcplayer/app/src/main/AndroidManifest.xml:3:5-71
+11-->/root/abcplayer/app/src/main/AndroidManifest.xml:3:22-68
+12
+13    <permission
+13-->[androidx.core:core:1.12.0] /root/.gradle/caches/8.12/transforms/470ad5defee78270766e205d99e6dc52/transformed/core-1.12.0/AndroidManifest.xml:22:5-24:47
+14        android:name="com.example.abcplayer.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+14-->[androidx.core:core:1.12.0] /root/.gradle/caches/8.12/transforms/470ad5defee78270766e205d99e6dc52/transformed/core-1.12.0/AndroidManifest.xml:23:9-81
+15        android:protectionLevel="signature" />
+15-->[androidx.core:core:1.12.0] /root/.gradle/caches/8.12/transforms/470ad5defee78270766e205d99e6dc52/transformed/core-1.12.0/AndroidManifest.xml:24:9-44
+16
+17    <uses-permission android:name="com.example.abcplayer.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+17-->[androidx.core:core:1.12.0] /root/.gradle/caches/8.12/transforms/470ad5defee78270766e205d99e6dc52/transformed/core-1.12.0/AndroidManifest.xml:26:5-97
+17-->[androidx.core:core:1.12.0] /root/.gradle/caches/8.12/transforms/470ad5defee78270766e205d99e6dc52/transformed/core-1.12.0/AndroidManifest.xml:26:22-94
+18
+19    <application
+19-->/root/abcplayer/app/src/main/AndroidManifest.xml:5:5-20:19
+20        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+20-->[androidx.core:core:1.12.0] /root/.gradle/caches/8.12/transforms/470ad5defee78270766e205d99e6dc52/transformed/core-1.12.0/AndroidManifest.xml:28:18-86
+21        android:extractNativeLibs="false"
+22        android:label="abcplayer"
+22-->/root/abcplayer/app/src/main/AndroidManifest.xml:6:9-34
+23        android:theme="@android:style/Theme.Material.Light" >
+23-->/root/abcplayer/app/src/main/AndroidManifest.xml:7:9-60
+24        <activity
+24-->/root/abcplayer/app/src/main/AndroidManifest.xml:9:9-18:20
+25            android:name="com.example.abcplayer.MainActivity"
+25-->/root/abcplayer/app/src/main/AndroidManifest.xml:10:13-41
+26            android:exported="true" >
+26-->/root/abcplayer/app/src/main/AndroidManifest.xml:11:13-36
+27            <intent-filter>
+27-->/root/abcplayer/app/src/main/AndroidManifest.xml:13:13-16:29
+28                <action android:name="android.intent.action.MAIN" />
+28-->/root/abcplayer/app/src/main/AndroidManifest.xml:14:17-69
+28-->/root/abcplayer/app/src/main/AndroidManifest.xml:14:25-66
+29
+30                <category android:name="android.intent.category.LAUNCHER" />
+30-->/root/abcplayer/app/src/main/AndroidManifest.xml:15:17-77
+30-->/root/abcplayer/app/src/main/AndroidManifest.xml:15:27-74
+31            </intent-filter>
+32        </activity>
+33    </application>
+34
+35</manifest>

@@ -1,0 +1,10 @@
+com.example.abcplayer.app-core-1.12.0-0 /root/.gradle/caches/8.12/transforms/470ad5defee78270766e205d99e6dc52/transformed/core-1.12.0/res
+com.example.abcplayer.app-jetified-annotation-experimental-1.3.0-1 /root/.gradle/caches/8.12/transforms/c009e6a52e22dc65332484c56d2ba00f/transformed/jetified-annotation-experimental-1.3.0/res
+com.example.abcplayer.app-lifecycle-runtime-2.3.1-2 /root/.gradle/caches/8.12/transforms/eab6771cced49c79a5e2230c9e6f50e0/transformed/lifecycle-runtime-2.3.1/res
+com.example.abcplayer.app-pngs-3 /root/abcplayer/app/build/generated/res/pngs/release
+com.example.abcplayer.app-resValues-4 /root/abcplayer/app/build/generated/res/resValues/release
+com.example.abcplayer.app-packageReleaseResources-5 /root/abcplayer/app/build/intermediates/incremental/release/packageReleaseResources/merged.dir
+com.example.abcplayer.app-packageReleaseResources-6 /root/abcplayer/app/build/intermediates/incremental/release/packageReleaseResources/stripped.dir
+com.example.abcplayer.app-merged_res-7 /root/abcplayer/app/build/intermediates/merged_res/release
+com.example.abcplayer.app-main-8 /root/abcplayer/app/src/main/res
+com.example.abcplayer.app-release-9 /root/abcplayer/app/src/release/res

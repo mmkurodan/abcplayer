@@ -1,0 +1,12 @@
+R_DEF: Internal format may change without notice
+local
+id btnPlay
+id btnRecord
+id editAbc
+id editTempo
+id scrollStatus
+id seekThreshold
+id spectrumView
+id txtStatus
+id txtThresholdValue
+layout activity_main

@@ -1,0 +1,170 @@
+/root/abcplayer/app/build.gradle:12: Warning: Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the android.os.Build.VERSION_CODES javadoc for details. [OldTargetApi]
+        targetSdk 34
+        ~~~~~~~~~~~~
+
+   Explanation for issues of type "OldTargetApi":
+   When your application runs on a version of Android that is more recent than
+   your targetSdkVersion specifies that it has been tested with, various
+   compatibility modes kick in. This ensures that your application continues
+   to work, but it may look out of place. For example, if the targetSdkVersion
+   is less than 14, your app may get an option button in the UI.
+
+   To fix this issue, set the targetSdkVersion to the highest available value.
+   Then test your app to make sure everything works correctly. You may want to
+   consult the compatibility notes to see what changes apply to each version
+   you are adding support for:
+   https://developer.android.com/reference/android/os/Build.VERSION_CODES.html
+   as well as follow this guide:
+   https://developer.android.com/distribute/best-practices/develop/target-sdk.
+   html
+
+   https://developer.android.com/distribute/best-practices/develop/target-sdk.html
+
+/root/abcplayer/app/build.gradle:26: Warning: A newer version of androidx.core:core than 1.12.0 is available: 1.18.0 [GradleDependency]
+    implementation 'androidx.core:core:1.12.0'
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "GradleDependency":
+   This detector looks for usages of libraries where the version you are using
+   is not the current stable release. Using older versions is fine, and there
+   are cases where you deliberately want to stick with an older version.
+   However, you may simply not be aware that a more recent version is
+   available, and that is what this lint check helps find.
+
+/root/abcplayer/app/src/main/java/com/example/abcplayer/MainActivity.java:231: Warning: This AsyncTask class should be static or leaks might occur (com.example.abcplayer.MainActivity.PlayTask) [StaticFieldLeak]
+    private class PlayTask extends AsyncTask<String, Void, String> {
+                  ~~~~~~~~
+/root/abcplayer/app/src/main/java/com/example/abcplayer/MainActivity.java:334: Warning: This AsyncTask class should be static or leaks might occur (com.example.abcplayer.MainActivity.AudioMonitorTask) [StaticFieldLeak]
+    private class AudioMonitorTask extends AsyncTask<Void, MonitorUpdate, String> {
+                  ~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "StaticFieldLeak":
+   A static field will leak contexts.
+
+   Non-static inner classes have an implicit reference to their outer class.
+   If that outer class is for example a Fragment or Activity, then this
+   reference means that the long-running handler/loader/task will hold a
+   reference to the activity which prevents it from getting garbage
+   collected.
+
+   Similarly, direct field references to activities and fragments from these
+   longer running instances can cause leaks.
+
+   ViewModel classes should never point to Views or non-application Contexts.
+
+/root/abcplayer/app/src/main/AndroidManifest.xml:5: Warning: Should explicitly set android:icon, there is no default [MissingApplicationIcon]
+    <application
+     ~~~~~~~~~~~
+
+   Explanation for issues of type "MissingApplicationIcon":
+   You should set an icon for the application as whole because there is no
+   default. This attribute must be set as a reference to a drawable resource
+   containing the image (for example @drawable/icon).
+
+   https://developer.android.com/studio/publish/preparing#publishing-configure
+
+/root/abcplayer/app/src/main/res/layout/activity_main.xml:22: Warning: Buttons in button bars should be borderless; use style="?android:attr/buttonBarButtonStyle" (and ?android:attr/buttonBarStyle on the parent) [ButtonStyle]
+        <Button
+         ~~~~~~
+/root/abcplayer/app/src/main/res/layout/activity_main.xml:29: Warning: Buttons in button bars should be borderless; use style="?android:attr/buttonBarButtonStyle" (and ?android:attr/buttonBarStyle on the parent) [ButtonStyle]
+        <Button
+         ~~~~~~
+
+   Explanation for issues of type "ButtonStyle":
+   Button bars typically use a borderless style for the buttons. Set the
+   style="?android:attr/buttonBarButtonStyle" attribute on each of the
+   buttons, and set style="?android:attr/buttonBarStyle" on the parent layout
+
+   https://d.android.com/r/studio-ui/designer/material/dialogs
+
+/root/abcplayer/app/src/main/res/layout/activity_main.xml:8: Warning: Missing autofillHints attribute [Autofill]
+    <EditText
+     ~~~~~~~~
+/root/abcplayer/app/src/main/res/layout/activity_main.xml:49: Warning: Missing autofillHints attribute [Autofill]
+        <EditText
+         ~~~~~~~~
+
+   Explanation for issues of type "Autofill":
+   Specify an autofillHints attribute when targeting SDK version 26 or higher
+   or explicitly specify that the view is not important for autofill. Your app
+   can help an autofill service classify the data correctly by providing the
+   meaning of each view that could be autofillable, such as views representing
+   usernames, passwords, credit card fields, email addresses, etc.
+
+   The hints can have any value, but it is recommended to use predefined
+   values like 'username' for a username or 'creditCardNumber' for a credit
+   card number. For a list of all predefined autofill hint constants, see the
+   AUTOFILL_HINT_ constants in the View reference at
+   https://developer.android.com/reference/android/view/View.html.
+
+   You can mark a view unimportant for autofill by specifying an
+   importantForAutofill attribute on that view or a parent view. See
+   https://developer.android.com/reference/android/view/View.html#setImportant
+   ForAutofill(int).
+
+   https://developer.android.com/guide/topics/text/autofill.html
+
+/root/abcplayer/app/src/main/java/com/example/abcplayer/MainActivity.java:129: Warning: String literal in setText can not be translated. Use Android resources instead. [SetTextI18n]
+            txtStatus.setText("ABC notation が空です");
+                              ~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "SetTextI18n":
+   When calling TextView#setText
+   * Never call Number#toString() to format numbers; it will not handle
+   fraction separators and locale-specific digits properly. Consider using
+   String#format with proper format specifications (%d or %f) instead.
+   * Do not pass a string literal (e.g. "Hello") to display text. Hardcoded
+   text can not be properly translated to other languages. Consider using
+   Android resource strings instead.
+   * Do not build messages by concatenating text chunks. Such messages can not
+   be properly translated.
+
+   https://developer.android.com/guide/topics/resources/localization.html
+
+/root/abcplayer/app/src/main/res/layout/activity_main.xml:13: Warning: Hardcoded string "ABC Notation を入力", should use @string resource [HardcodedText]
+        android:hint="ABC Notation を入力"
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/root/abcplayer/app/src/main/res/layout/activity_main.xml:27: Warning: Hardcoded string "再生", should use @string resource [HardcodedText]
+            android:text="再生" />
+            ~~~~~~~~~~~~~~~~~
+/root/abcplayer/app/src/main/res/layout/activity_main.xml:34: Warning: Hardcoded string "録音", should use @string resource [HardcodedText]
+            android:text="録音" />
+            ~~~~~~~~~~~~~~~~~
+/root/abcplayer/app/src/main/res/layout/activity_main.xml:47: Warning: Hardcoded string "テンポ (BPM)", should use @string resource [HardcodedText]
+            android:text="テンポ (BPM)" />
+            ~~~~~~~~~~~~~~~~~~~~~~~~
+/root/abcplayer/app/src/main/res/layout/activity_main.xml:55: Warning: Hardcoded string "120", should use @string resource [HardcodedText]
+            android:text="120" />
+            ~~~~~~~~~~~~~~~~~~
+/root/abcplayer/app/src/main/res/layout/activity_main.xml:63: Warning: Hardcoded string "閾値倍率: 200", should use @string resource [HardcodedText]
+        android:text="閾値倍率: 200" />
+        ~~~~~~~~~~~~~~~~~~~~~~~~
+/root/abcplayer/app/src/main/res/layout/activity_main.xml:90: Warning: Hardcoded string "ステータス", should use @string resource [HardcodedText]
+            android:text="ステータス" />
+            ~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "HardcodedText":
+   Hardcoding text attributes directly in layout files is bad for several
+   reasons:
+
+   * When creating configuration variations (for example for landscape or
+   portrait) you have to repeat the actual text (and keep it up to date when
+   making changes)
+
+   * The application cannot be translated to other languages by just adding
+   new translations for existing string resources.
+
+   There are quickfixes to automatically extract this hardcoded string into a
+   resource lookup.
+
+/root/abcplayer/app/src/main/AndroidManifest.xml: Warning: The project references RTL attributes, but does not explicitly enable or disable RTL support with android:supportsRtl in the manifest [RtlEnabled]
+
+   Explanation for issues of type "RtlEnabled":
+   To enable right-to-left support, when running on API 17 and higher, you
+   must set the android:supportsRtl attribute in the manifest <application>
+   element.
+
+   If you have started adding RTL attributes, but have not yet finished the
+   migration, you can set the attribute to false to satisfy this lint check.
+
+0 errors, 18 warnings
