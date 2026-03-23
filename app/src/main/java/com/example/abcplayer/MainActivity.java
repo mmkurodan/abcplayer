@@ -5,11 +5,13 @@ import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
+import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ScrollView;
@@ -19,10 +21,15 @@ import android.widget.TextView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import org.jtransforms.fft.DoubleFFT_1D;
+import com.example.abcplayer.audio.AnalysisConfig;
+import com.example.abcplayer.audio.AudioAnalysisEngine;
+import com.example.abcplayer.audio.AudioAnalysisResult;
+import com.example.abcplayer.audio.DetectedPitch;
+import com.example.abcplayer.audio.tempo_calibration.PlaybackTempoPlan;
+import com.example.abcplayer.audio.tempo_calibration.TempoCalibrator;
+import com.example.abcplayer.audio.tempo_calibration.TempoMetadata;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -31,10 +38,12 @@ public class MainActivity extends Activity {
 
     private static final int REQ_RECORD = 1001;
     private static final int DEFAULT_TEMPO_BPM = 120;
+    private static final int DEFAULT_SAMPLE_RATE = 44100;
     private static final int MIN_THRESHOLD_MULTIPLIER = 1;
     private static final int DEFAULT_THRESHOLD_MULTIPLIER = 200;
     private static final int MAX_THRESHOLD_MULTIPLIER = 400;
     private static final double MIN_RECORDABLE_BEATS = 1.0 / 8.0;
+    private static final int[] INPUT_SAMPLE_RATE_CANDIDATES = {48000, 44100, 32000, 22050, 16000};
 
     private EditText editAbc;
     private EditText editTempo;
@@ -134,7 +143,7 @@ public class MainActivity extends Activity {
         txtStatus.setText("解析・生成中...\n");
 
         currentTask = new PlayTask();
-        currentTask.execute(abc);
+        currentTask.execute(new PlaybackRequest(abc, editTempo.getText().toString().trim()));
     }
 
     private void onRecordClicked() {
@@ -207,6 +216,66 @@ public class MainActivity extends Activity {
         }
     }
 
+    private double getPlaybackTempoBpm(String tempoText, double fallbackBpm) {
+        double safeFallback = fallbackBpm > 0.0 ? fallbackBpm : DEFAULT_TEMPO_BPM;
+        if (tempoText == null || tempoText.trim().isEmpty()) {
+            return safeFallback;
+        }
+        try {
+            double value = Double.parseDouble(tempoText.trim());
+            return value > 0.0 ? value : safeFallback;
+        } catch (NumberFormatException e) {
+            runOnUiThread(() -> appendStatus(String.format(Locale.US, "テンポ入力が不正なため %.2f BPM を使います\n", safeFallback)));
+            return safeFallback;
+        }
+    }
+
+    private int resolveInputSampleRate() {
+        for (int candidate : INPUT_SAMPLE_RATE_CANDIDATES) {
+            int minBufferSize = AudioRecord.getMinBufferSize(candidate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+            if (minBufferSize > 0) {
+                return candidate;
+            }
+        }
+        return DEFAULT_SAMPLE_RATE;
+    }
+
+    private int resolvePlaybackSampleRate() {
+        AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
+        if (audioManager != null) {
+            String property = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE);
+            if (property != null) {
+                try {
+                    int sampleRate = Integer.parseInt(property);
+                    if (sampleRate > 0) {
+                        return sampleRate;
+                    }
+                } catch (NumberFormatException ignored) {
+                    // Fall back to the app default sample rate below.
+                }
+            }
+        }
+        return DEFAULT_SAMPLE_RATE;
+    }
+
+    private String stablePitchesToAbc(List<DetectedPitch> stablePitches) {
+        if (stablePitches == null || stablePitches.isEmpty()) {
+            return "z";
+        }
+        if (stablePitches.size() == 1) {
+            return stablePitches.get(0).toAbcNote();
+        }
+        StringBuilder builder = new StringBuilder("[");
+        for (int i = 0; i < stablePitches.size(); i++) {
+            if (i > 0) {
+                builder.append(' ');
+            }
+            builder.append(stablePitches.get(i).toAbcNote());
+        }
+        builder.append(']');
+        return builder.toString();
+    }
+
     private void stopCurrentPlayback() {
         if (currentTask != null) {
             currentTask.cancel(true);
@@ -228,10 +297,11 @@ public class MainActivity extends Activity {
         stopAudioMonitoring();
     }
 
-    private class PlayTask extends AsyncTask<String, Void, String> {
+    private class PlayTask extends AsyncTask<PlaybackRequest, Void, String> {
         @Override
-        protected String doInBackground(String... params) {
-            String abc = params[0];
+        protected String doInBackground(PlaybackRequest... params) {
+            PlaybackRequest request = params[0];
+            String abc = request.abcText;
             try {
                 AbcTokenizer tokenizer = new AbcTokenizer();
                 List<AbcTokenizer.Token> toks = tokenizer.tokenize(abc);
@@ -261,9 +331,24 @@ public class MainActivity extends Activity {
                 sb.append("events=").append(notes.length).append("\n");
                 runOnUiThread(() -> appendStatus(sb.toString()));
 
-                double tempo = score.header.tempoBpm;
+                TempoMetadata tempoMetadata = TempoMetadata.fromAbc(abc);
+                double requestedTempo = getPlaybackTempoBpm(request.tempoText, score.header.tempoBpm);
+                PlaybackTempoPlan playbackPlan = PlaybackTempoPlan.fromMetadata(tempoMetadata, requestedTempo);
+                double tempo = playbackPlan.correctedTempoBpm;
                 double defaultLen = score.header.defaultNoteLength;
-                int sampleRate = 44100;
+                int sampleRate = resolvePlaybackSampleRate();
+                int channelConfig = AudioFormat.CHANNEL_OUT_MONO;
+                int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
+                int minBufferSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, audioFormat);
+                if (minBufferSize <= 0 && sampleRate != DEFAULT_SAMPLE_RATE) {
+                    sampleRate = DEFAULT_SAMPLE_RATE;
+                    minBufferSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, audioFormat);
+                }
+                if (minBufferSize <= 0) {
+                    return "エラー: 再生バッファを確保できません";
+                }
+                int chunkSamples = Math.max(1024, minBufferSize / 2);
+
                 double secPerBeat = 60.0 / tempo;
                 int totalSamples = 0;
                 for (NoteEvent n : notes) {
@@ -275,10 +360,16 @@ public class MainActivity extends Activity {
                     return "キャンセル";
                 }
 
-                int channelConfig = AudioFormat.CHANNEL_OUT_MONO;
-                int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
-                int minBufferSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, audioFormat);
-                int chunkSamples = Math.max(1024, minBufferSize / 2);
+                int playbackSampleRate = sampleRate;
+                runOnUiThread(() -> appendStatus(String.format(
+                        Locale.US,
+                        "再生テンポ 指定=%.2f 実測=%.2f 補正後=%.2f 補正係数=%.5f sampleRate=%d\n",
+                        playbackPlan.requestedBpm,
+                        playbackPlan.actualBpm,
+                        playbackPlan.correctedTempoBpm,
+                        playbackPlan.correctionFactor,
+                        playbackSampleRate
+                )));
 
                 audioTrack = new AudioTrack.Builder()
                         .setAudioAttributes(new AudioAttributes.Builder()
@@ -289,7 +380,7 @@ public class MainActivity extends Activity {
                                 .setEncoding(audioFormat)
                                 .setSampleRate(sampleRate)
                                 .setChannelMask(channelConfig)
-                                .build())
+                        .build())
                         .setBufferSizeInBytes(Math.max(minBufferSize, chunkSamples * 2))
                         .setTransferMode(AudioTrack.MODE_STREAM)
                         .build();
@@ -332,15 +423,13 @@ public class MainActivity extends Activity {
     }
 
     private class AudioMonitorTask extends AsyncTask<Void, MonitorUpdate, String> {
-        private static final int SAMPLE_RATE = 44100;
-        private static final int FFT_SIZE = 2048;
         private static final int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO;
         private static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
-        private static final int MAX_PEAKS = 4;
 
         private final Object recordingLock = new Object();
-        private final DoubleFFT_1D fft = new DoubleFFT_1D(FFT_SIZE);
-        private final double[] window = new double[FFT_SIZE];
+        private final int sampleRate;
+        private final AnalysisConfig analysisConfig;
+        private final AudioAnalysisEngine analysisEngine;
         private final List<RecordedSegment> recordedSegments = new ArrayList<>();
 
         private volatile boolean running = true;
@@ -350,21 +439,27 @@ public class MainActivity extends Activity {
         private String currentChord;
         private double currentDurationSec;
         private double recordingTempoBpm = DEFAULT_TEMPO_BPM;
+        private TempoCalibrator tempoCalibrator;
 
         AudioMonitorTask() {
-            for (int i = 0; i < FFT_SIZE; i++) {
-                window[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (FFT_SIZE - 1));
-            }
+            sampleRate = resolveInputSampleRate();
+            analysisConfig = AnalysisConfig.realtimeDefaults(sampleRate);
+            analysisEngine = new AudioAnalysisEngine(analysisConfig);
         }
 
         @Override
         protected void onPreExecute() {
-            appendStatus("音声監視を開始します\n");
+            appendStatus(String.format(
+                    Locale.US,
+                    "音声監視を開始します sampleRate=%dHz frame=%d\n",
+                    sampleRate,
+                    analysisConfig.fftSize
+            ));
         }
 
         @Override
         protected String doInBackground(Void... voids) {
-            int minBufferBytes = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT);
+            int minBufferBytes = AudioRecord.getMinBufferSize(sampleRate, CHANNEL_CONFIG, AUDIO_FORMAT);
             if (minBufferBytes <= 0) {
                 return "エラー: 録音バッファを確保できません";
             }
@@ -373,17 +468,16 @@ public class MainActivity extends Activity {
                 return "録音権限がありません";
             }
 
-            int bufferSizeBytes = Math.max(minBufferBytes, FFT_SIZE * 2);
-            recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT, bufferSizeBytes);
+            int frameSize = analysisConfig.fftSize;
+            int bufferSizeBytes = Math.max(minBufferBytes, frameSize * 2);
+            recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, sampleRate, CHANNEL_CONFIG, AUDIO_FORMAT, bufferSizeBytes);
             if (recorder.getState() != AudioRecord.STATE_INITIALIZED) {
                 recorder.release();
                 recorder = null;
                 return "エラー: AudioRecord の初期化に失敗しました";
             }
 
-            short[] buffer = new short[FFT_SIZE];
-            double[] fftInput = new double[FFT_SIZE * 2];
-            double[] spectrum = new double[FFT_SIZE / 2];
+            short[] buffer = new short[frameSize];
 
             try {
                 if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECORD_AUDIO)
@@ -393,14 +487,20 @@ public class MainActivity extends Activity {
                 recorder.startRecording();
 
                 while (running && !isCancelled()) {
+                    long readStartNanos = SystemClock.elapsedRealtimeNanos();
                     int read = recorder.read(buffer, 0, buffer.length);
+                    long readEndNanos = SystemClock.elapsedRealtimeNanos();
                     if (read <= 0) {
                         continue;
                     }
 
-                    AnalysisFrame frame = analyzeFrame(buffer, read, fftInput, spectrum);
-                    updateRecording(frame.chord, frame.frameSeconds);
-                    publishProgress(new MonitorUpdate(frame.noteMagnitudes, (float) frame.threshold, frame.chord));
+                    double measuredFrameDurationSec = Math.max(
+                            read / (double) sampleRate,
+                            (readEndNanos - readStartNanos) / 1_000_000_000.0
+                    );
+                    AudioAnalysisResult frame = analysisEngine.analyze(buffer, read, measuredFrameDurationSec, thresholdMultiplier);
+                    updateRecording(frame, measuredFrameDurationSec, readEndNanos);
+                    publishProgress(new MonitorUpdate(frame.noteMagnitudes, (float) frame.threshold, frame.noteSummary));
                 }
                 return null;
             } catch (SecurityException e) {
@@ -413,6 +513,7 @@ public class MainActivity extends Activity {
                 e.printStackTrace();
                 return "エラー: " + e.getMessage();
             } finally {
+                analysisEngine.reset();
                 releaseRecorder();
             }
         }
@@ -420,7 +521,7 @@ public class MainActivity extends Activity {
         @Override
         protected void onProgressUpdate(MonitorUpdate... values) {
             MonitorUpdate update = values[0];
-            spectrumView.updateSpectrum(update.noteMagnitudes, update.threshold, update.chord);
+            spectrumView.updateSpectrum(update.noteMagnitudes, update.threshold, update.summary);
         }
 
         @Override
@@ -462,24 +563,44 @@ public class MainActivity extends Activity {
                 recordedSegments.clear();
                 currentChord = null;
                 currentDurationSec = 0.0;
+                tempoCalibrator = new TempoCalibrator(tempoBpm, analysisConfig.minimumOnsetIntervalMs);
+                tempoCalibrator.start(SystemClock.elapsedRealtimeNanos());
             }
             btnRecord.setText("録音停止");
-            appendStatus(String.format(Locale.US, "録音開始 BPM=%.2f 閾値倍率=%d\n", tempoBpm, thresholdMultiplier));
+            appendStatus(String.format(
+                    Locale.US,
+                    "録音開始 BPM=%.2f 閾値倍率=%d frame=%d\n",
+                    tempoBpm,
+                    thresholdMultiplier,
+                    analysisConfig.fftSize
+            ));
         }
 
         void stopRecordingSession(boolean dueToMonitoringStop) {
             final String abcText;
+            final TempoMetadata tempoMetadata;
             synchronized (recordingLock) {
                 if (!recording) {
                     return;
                 }
-                abcText = finishRecordingLocked();
+                flushCurrentSegmentLocked();
+                tempoMetadata = tempoCalibrator != null
+                        ? tempoCalibrator.finish(SystemClock.elapsedRealtimeNanos())
+                        : TempoMetadata.identity(recordingTempoBpm);
+                abcText = finishRecordingLocked(tempoMetadata);
                 recording = false;
+                tempoCalibrator = null;
             }
 
             btnRecord.setText("録音");
             editAbc.setText(abcText.trim());
-            appendStatus(dueToMonitoringStop ? "音声監視停止に伴い録音を終了しました\n" : "録音完了\n");
+            appendStatus(String.format(
+                    Locale.US,
+                    "%s 実測BPM=%.2f 補正係数=%.5f\n",
+                    dueToMonitoringStop ? "音声監視停止に伴い録音を終了しました" : "録音完了",
+                    tempoMetadata.actualBpm,
+                    tempoMetadata.correctionFactor
+            ));
         }
 
         void stopMonitoring() {
@@ -489,69 +610,16 @@ public class MainActivity extends Activity {
             running = false;
         }
 
-        private AnalysisFrame analyzeFrame(short[] buffer, int read, double[] fftInput, double[] spectrum) {
-            int len = Math.min(read, FFT_SIZE);
-            double sumSq = 0.0;
-            for (int i = 0; i < len; i++) {
-                double normalized = buffer[i] / 32768.0;
-                sumSq += normalized * normalized;
-                fftInput[2 * i] = buffer[i] * window[i];
-                fftInput[2 * i + 1] = 0.0;
-            }
-            for (int i = len; i < FFT_SIZE; i++) {
-                fftInput[2 * i] = 0.0;
-                fftInput[2 * i + 1] = 0.0;
-            }
-
-            fft.complexForward(fftInput);
-
-            int specLen = FFT_SIZE / 2;
-            for (int i = 0; i < specLen; i++) {
-                double re = fftInput[2 * i];
-                double im = fftInput[2 * i + 1];
-                spectrum[i] = Math.sqrt(re * re + im * im);
-            }
-
-            double noiseFloor = percentile(spectrum, specLen, 20.0);
-            double magThreshold = Math.max(1e-6, noiseFloor * thresholdMultiplier);
-            int[] peakBins = findPeaks(spectrum, specLen, MAX_PEAKS, magThreshold);
-            String chord;
-            if (peakBins.length == 0) {
-                chord = "z";
-            } else {
-                peakBins = suppressHarmonics(peakBins, SAMPLE_RATE / (double) FFT_SIZE);
-                double[] freqs = new double[peakBins.length];
-                for (int i = 0; i < peakBins.length; i++) {
-                    freqs[i] = peakBins[i] * SAMPLE_RATE / (double) FFT_SIZE;
-                }
-                chord = binsToAbc(freqs);
-            }
-
-            float[] noteMagnitudes = buildNoteMagnitudes(spectrum, specLen);
-            double rms = Math.sqrt(sumSq / Math.max(1, len));
-            double frameSeconds = len / (double) SAMPLE_RATE;
-            return new AnalysisFrame(chord, noteMagnitudes, magThreshold, rms, frameSeconds);
-        }
-
-        private float[] buildNoteMagnitudes(double[] spectrum, int specLen) {
-            float[] noteMagnitudes = new float[SpectrumView.NOTE_COUNT];
-            for (int i = 1; i < specLen; i++) {
-                double freq = i * SAMPLE_RATE / (double) FFT_SIZE;
-                int midi = freqToMidi(freq);
-                if (midi < SpectrumView.MIN_MIDI || midi > SpectrumView.MAX_MIDI) {
-                    continue;
-                }
-                int index = midi - SpectrumView.MIN_MIDI;
-                noteMagnitudes[index] = Math.max(noteMagnitudes[index], (float) spectrum[i]);
-            }
-            return noteMagnitudes;
-        }
-
-        private void updateRecording(String chord, double frameSeconds) {
+        private void updateRecording(AudioAnalysisResult frame, double frameSeconds, long timestampNanos) {
             synchronized (recordingLock) {
                 if (!recording) {
                     return;
                 }
+                if (tempoCalibrator != null) {
+                    tempoCalibrator.observeDetectedPitches(frame.stablePitches, timestampNanos);
+                }
+
+                String chord = stablePitchesToAbc(frame.stablePitches);
                 if (currentChord == null) {
                     currentChord = chord;
                     currentDurationSec = frameSeconds;
@@ -575,6 +643,9 @@ public class MainActivity extends Activity {
             if (beats >= MIN_RECORDABLE_BEATS) {
                 double quantizedBeats = Math.max(MIN_RECORDABLE_BEATS, Math.round(beats * 8.0) / 8.0);
                 appendOrMergeSegmentLocked(currentChord, quantizedBeats);
+                if (tempoCalibrator != null) {
+                    tempoCalibrator.recordQuantizedBeats(quantizedBeats);
+                }
             }
             currentChord = null;
             currentDurationSec = 0.0;
@@ -591,9 +662,8 @@ public class MainActivity extends Activity {
             recordedSegments.add(new RecordedSegment(chord, beats));
         }
 
-        private String finishRecordingLocked() {
-            flushCurrentSegmentLocked();
-            String abcText = buildRecordedAbc(recordedSegments, recordingTempoBpm);
+        private String finishRecordingLocked(TempoMetadata tempoMetadata) {
+            String abcText = buildRecordedAbc(recordedSegments, recordingTempoBpm, tempoMetadata);
             recordedSegments.clear();
             currentChord = null;
             currentDurationSec = 0.0;
@@ -611,165 +681,16 @@ public class MainActivity extends Activity {
             recorder.release();
             recorder = null;
         }
-
-        private int[] findPeaks(double[] spectrum, int len, int maxCount, double threshold) {
-            int[] bins = new int[maxCount];
-            double[] mags = new double[maxCount];
-            int found = 0;
-            for (int i = 1; i < len - 1; i++) {
-                double magnitude = spectrum[i];
-                if (magnitude < threshold || magnitude < spectrum[i - 1] || magnitude < spectrum[i + 1]) {
-                    continue;
-                }
-                for (int k = 0; k < maxCount; k++) {
-                    if (magnitude > mags[k]) {
-                        for (int s = maxCount - 1; s > k; s--) {
-                            mags[s] = mags[s - 1];
-                            bins[s] = bins[s - 1];
-                        }
-                        mags[k] = magnitude;
-                        bins[k] = i;
-                        if (found < maxCount) {
-                            found++;
-                        }
-                        break;
-                    }
-                }
-            }
-            return Arrays.copyOf(bins, found);
-        }
-
-        private int[] suppressHarmonics(int[] bins, double binResHz) {
-            List<Integer> kept = new ArrayList<>();
-            for (int bin : bins) {
-                double freq = bin * binResHz;
-                boolean skip = false;
-                for (int base : kept) {
-                    double baseFreq = base * binResHz;
-                    double ratio = freq / baseFreq;
-                    double nearest = Math.rint(ratio);
-                    if (nearest >= 2 && nearest <= 4 && Math.abs(ratio - nearest) < 0.05) {
-                        skip = true;
-                        break;
-                    }
-                    if (Math.abs(bin - base) <= 1) {
-                        skip = true;
-                        break;
-                    }
-                }
-                if (!skip) {
-                    kept.add(bin);
-                }
-            }
-            int[] result = new int[kept.size()];
-            for (int i = 0; i < kept.size(); i++) {
-                result[i] = kept.get(i);
-            }
-            return result;
-        }
-
-        private double percentile(double[] arr, int len, double p) {
-            double[] copy = Arrays.copyOf(arr, len);
-            Arrays.sort(copy);
-            if (len == 0) {
-                return 0.0;
-            }
-            double rank = (p / 100.0) * (len - 1);
-            int low = (int) Math.floor(rank);
-            int high = (int) Math.ceil(rank);
-            if (low == high) {
-                return copy[low];
-            }
-            double weight = rank - low;
-            return copy[low] * (1 - weight) + copy[high] * weight;
-        }
-
-        private String binsToAbc(double[] freqs) {
-            Arrays.sort(freqs);
-            if (freqs.length == 1) {
-                return freqToAbc(freqs[0]);
-            }
-            StringBuilder sb = new StringBuilder("[");
-            for (int i = 0; i < freqs.length; i++) {
-                sb.append(freqToAbc(freqs[i]));
-                if (i < freqs.length - 1) {
-                    sb.append(' ');
-                }
-            }
-            sb.append(']');
-            return sb.toString();
-        }
-
-        private String freqToAbc(double freq) {
-            int midi = freqToMidi(freq);
-            int octave = midi / 12 - 1;
-            int pc = (midi % 12 + 12) % 12;
-            String note;
-            switch (pc) {
-                case 0:
-                    note = "C";
-                    break;
-                case 1:
-                    note = "^C";
-                    break;
-                case 2:
-                    note = "D";
-                    break;
-                case 3:
-                    note = "^D";
-                    break;
-                case 4:
-                    note = "E";
-                    break;
-                case 5:
-                    note = "F";
-                    break;
-                case 6:
-                    note = "^F";
-                    break;
-                case 7:
-                    note = "G";
-                    break;
-                case 8:
-                    note = "^G";
-                    break;
-                case 9:
-                    note = "A";
-                    break;
-                case 10:
-                    note = "^A";
-                    break;
-                case 11:
-                    note = "B";
-                    break;
-                default:
-                    note = "C";
-                    break;
-            }
-            if (octave >= 5) {
-                int ups = octave - 4;
-                for (int i = 0; i < ups; i++) {
-                    note += "'";
-                }
-            } else if (octave <= 3) {
-                int downs = 4 - octave;
-                for (int i = 0; i < downs; i++) {
-                    note += ",";
-                }
-            }
-            return note;
-        }
-
-        private int freqToMidi(double freq) {
-            return (int) Math.round(69 + 12 * Math.log(freq / 440.0) / Math.log(2));
-        }
     }
 
-    private String buildRecordedAbc(List<RecordedSegment> segments, double tempoBpm) {
+    private String buildRecordedAbc(List<RecordedSegment> segments, double tempoBpm, TempoMetadata tempoMetadata) {
         StringBuilder abcBuilder = new StringBuilder();
         abcBuilder.append("X:1\nT:Recorded\nM:4/4\nL:1/4\nQ:")
                 .append(formatTempo(tempoBpm))
                 .append("\nK:C\n");
+        if (tempoMetadata != null) {
+            abcBuilder.append(tempoMetadata.toCommentLine()).append('\n');
+        }
         for (RecordedSegment segment : segments) {
             abcBuilder.append(segment.chord)
                     .append(lengthToToken(segment.beats))
@@ -861,31 +782,25 @@ public class MainActivity extends Activity {
         scrollStatus.post(() -> scrollStatus.fullScroll(ScrollView.FOCUS_DOWN));
     }
 
-    private static final class AnalysisFrame {
-        final String chord;
-        final float[] noteMagnitudes;
-        final double threshold;
-        final double rms;
-        final double frameSeconds;
-
-        AnalysisFrame(String chord, float[] noteMagnitudes, double threshold, double rms, double frameSeconds) {
-            this.chord = chord;
-            this.noteMagnitudes = noteMagnitudes;
-            this.threshold = threshold;
-            this.rms = rms;
-            this.frameSeconds = frameSeconds;
-        }
-    }
-
     private static final class MonitorUpdate {
         final float[] noteMagnitudes;
         final float threshold;
-        final String chord;
+        final String summary;
 
-        MonitorUpdate(float[] noteMagnitudes, float threshold, String chord) {
+        MonitorUpdate(float[] noteMagnitudes, float threshold, String summary) {
             this.noteMagnitudes = noteMagnitudes;
             this.threshold = threshold;
-            this.chord = chord;
+            this.summary = summary;
+        }
+    }
+
+    private static final class PlaybackRequest {
+        final String abcText;
+        final String tempoText;
+
+        PlaybackRequest(String abcText, String tempoText) {
+            this.abcText = abcText;
+            this.tempoText = tempoText;
         }
     }
 
