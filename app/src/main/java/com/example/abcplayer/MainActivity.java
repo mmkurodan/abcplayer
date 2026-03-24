@@ -685,8 +685,8 @@ public class MainActivity extends Activity {
 
     private String buildRecordedAbc(List<RecordedSegment> segments, double tempoBpm, TempoMetadata tempoMetadata) {
         StringBuilder abcBuilder = new StringBuilder();
-        abcBuilder.append("X:1\nT:Recorded\nM:4/4\nL:1/4\nQ:")
-                .append(formatTempo(tempoBpm))
+        abcBuilder.append("X:1\nT:Recorded\nM:4/4\nL:1/4\n")
+                .append(AbcTempoNotation.formatQuarterNoteTempo(tempoBpm))
                 .append("\nK:C\n");
         if (tempoMetadata != null) {
             abcBuilder.append(tempoMetadata.toCommentLine()).append('\n');
@@ -697,13 +697,6 @@ public class MainActivity extends Activity {
                     .append(' ');
         }
         return abcBuilder.toString();
-    }
-
-    private String formatTempo(double tempoBpm) {
-        if (Math.abs(tempoBpm - Math.rint(tempoBpm)) < 1e-6) {
-            return Integer.toString((int) Math.rint(tempoBpm));
-        }
-        return String.format(Locale.US, "%.2f", tempoBpm);
     }
 
     private double secondsToBeats(double seconds, double bpm) {

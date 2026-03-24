@@ -31,6 +31,7 @@ public class TempoCalibratorTest {
         assertEquals(original.actualBpm, parsed.actualBpm, 0.0001);
         assertEquals(original.userBpm, parsed.userBpm, 0.0001);
         assertEquals(original.correctionFactor, plan.correctionFactor, 0.0001);
-        assertEquals((60.0 / 120.0) * (118.5 / 120.0), plan.correctedIntervalSec, 1e-9);
+        assertEquals(118.5, plan.correctedTempoBpm, 0.0001);
+        assertEquals(60.0 / 118.5, plan.correctedIntervalSec, 1e-9);
     }
 }

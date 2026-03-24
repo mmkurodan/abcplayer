@@ -14,7 +14,7 @@ public class AbcHeader {
     // デフォルト音符長 L: 例 "1/8"
     public double defaultNoteLength = 0.125;
 
-    // テンポ Q: 例 "1/4=120"
+    // テンポ Q: 例 "1/4=120"。内部では四分音符 = 1 beat の BPM に正規化して保持する
     public double tempoBpm = 120.0;
 
     // キー K: 例 "C", "G", "D", "F", "Am" など
@@ -50,13 +50,7 @@ public class AbcHeader {
     }
 
     public void setTempo(String q) {
-        // 例: "1/4=120"
-        if (q.contains("=")) {
-            String[] parts = q.split("=");
-            tempoBpm = Double.parseDouble(parts[1]);
-        } else {
-            tempoBpm = Double.parseDouble(q.trim());
-        }
+        tempoBpm = AbcTempoNotation.normalizeTempoBpm(q, tempoBpm);
     }
 
     public void setKey(String k) {

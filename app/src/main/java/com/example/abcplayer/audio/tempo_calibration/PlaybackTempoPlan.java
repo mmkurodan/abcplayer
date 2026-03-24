@@ -35,7 +35,7 @@ public class PlaybackTempoPlan {
             correctionFactor = 1.0;
         }
         double baseIntervalSec = 60.0 / safeRequestedBpm;
-        double correctedIntervalSec = baseIntervalSec * correctionFactor;
+        double correctedIntervalSec = baseIntervalSec / correctionFactor;
         double correctedTempoBpm = correctedIntervalSec > 0.0 ? 60.0 / correctedIntervalSec : safeRequestedBpm;
         return new PlaybackTempoPlan(
                 safeRequestedBpm,
