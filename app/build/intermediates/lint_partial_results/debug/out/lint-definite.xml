@@ -232,15 +232,85 @@
     <incident
         id="HardcodedText"
         severity="warning"
+        message="Hardcoded string &quot;和音モード:&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="80"
+            column="13"
+            startOffset="2555"
+            endLine="80"
+            endColumn="34"
+            endOffset="2576"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;自動&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="88"
+            column="13"
+            startOffset="2827"
+            endLine="88"
+            endColumn="30"
+            endOffset="2844"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;固定&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="96"
+            column="13"
+            startOffset="3096"
+            endLine="96"
+            endColumn="30"
+            endOffset="3113"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;固定数:&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="109"
+            column="13"
+            startOffset="3496"
+            endLine="109"
+            endColumn="32"
+            endOffset="3515"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;4&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="123"
+            column="13"
+            startOffset="3971"
+            endLine="123"
+            endColumn="29"
+            endOffset="3987"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
         message="Hardcoded string &quot;ステータス&quot;, should use `@string` resource">
         <location
             file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
-            line="90"
+            line="147"
             column="13"
-            startOffset="2890"
-            endLine="90"
+            startOffset="4748"
+            endLine="147"
             endColumn="33"
-            endOffset="2910"/>
+            endOffset="4768"/>
     </incident>
 
     <incident
@@ -249,12 +319,12 @@
         message="This `AsyncTask` class should be static or leaks might occur (com.example.abcplayer.MainActivity.PlayTask)">
         <location
             file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/abcplayer/MainActivity.java"
-            line="231"
+            line="361"
             column="19"
-            startOffset="7712"
-            endLine="231"
+            startOffset="13180"
+            endLine="361"
             endColumn="27"
-            endOffset="7720"/>
+            endOffset="13188"/>
     </incident>
 
     <incident
@@ -263,12 +333,12 @@
         message="This `AsyncTask` class should be static or leaks might occur (com.example.abcplayer.MainActivity.AudioMonitorTask)">
         <location
             file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/abcplayer/MainActivity.java"
-            line="334"
+            line="486"
             column="19"
-            startOffset="12210"
-            endLine="334"
+            startOffset="18940"
+            endLine="486"
             endColumn="35"
-            endOffset="12226"/>
+            endOffset="18956"/>
     </incident>
 
     <incident
@@ -277,12 +347,12 @@
         message="String literal in `setText` can not be translated. Use Android resources instead.">
         <location
             file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/abcplayer/MainActivity.java"
-            line="129"
+            line="199"
             column="31"
-            startOffset="4423"
-            endLine="129"
+            startOffset="7523"
+            endLine="199"
             endColumn="50"
-            endOffset="4442"/>
+            endOffset="7542"/>
     </incident>
 
     <incident

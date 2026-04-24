@@ -67,6 +67,63 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="和音モード:" />
+
+        <Button
+            android:id="@+id/btnPolyphonyAuto"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:text="自動" />
+
+        <Button
+            android:id="@+id/btnPolyphonyFixed"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:text="固定" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="固定数:" />
+
+        <SeekBar
+            android:id="@+id/seekPolyphonyCount"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp" />
+
+        <TextView
+            android:id="@+id/txtPolyphonyCount"
+            android:layout_width="24dp"
+            android:layout_height="wrap_content"
+            android:text="4"
+            android:textAlignment="center" />
+    </LinearLayout>
+
     <com.example.abcplayer.SpectrumView
         android:id="@+id/spectrumView"
         android:layout_width="match_parent"

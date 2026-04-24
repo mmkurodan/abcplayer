@@ -28,11 +28,24 @@ public class HarmonicFilter {
         }
 
         kept.sort(Comparator.comparingDouble((PeakCandidate peak) -> peak.magnitude).reversed());
-        if (kept.size() > config.maxFundamentals) {
-            kept = new ArrayList<>(kept.subList(0, config.maxFundamentals));
+        
+        int maxCount = getMaxPolyphonyCount();
+        if (kept.size() > maxCount) {
+            kept = new ArrayList<>(kept.subList(0, maxCount));
         }
         kept.sort(Comparator.comparingDouble(peak -> peak.frequencyHz));
         return kept;
+    }
+
+    private int getMaxPolyphonyCount() {
+        switch (config.polyphonyMode) {
+            case AUTOMATIC:
+                return config.maxFundamentals;
+            case FIXED:
+                return Math.max(1, Math.min(config.fixedPolyphonyCount, config.maxFundamentals));
+            default:
+                return config.maxFundamentals;
+        }
     }
 
     private boolean isHarmonicOrDuplicate(PeakCandidate candidate, List<PeakCandidate> kept) {

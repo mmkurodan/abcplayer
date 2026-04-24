@@ -1,12 +1,16 @@
 R_DEF: Internal format may change without notice
 local
 id btnPlay
+id btnPolyphonyAuto
+id btnPolyphonyFixed
 id btnRecord
 id editAbc
 id editTempo
 id scrollStatus
+id seekPolyphonyCount
 id seekThreshold
 id spectrumView
+id txtPolyphonyCount
 id txtStatus
 id txtThresholdValue
 layout activity_main

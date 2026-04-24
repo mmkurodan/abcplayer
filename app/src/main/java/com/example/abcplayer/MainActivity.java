@@ -25,6 +25,7 @@ import com.example.abcplayer.audio.AnalysisConfig;
 import com.example.abcplayer.audio.AudioAnalysisEngine;
 import com.example.abcplayer.audio.AudioAnalysisResult;
 import com.example.abcplayer.audio.DetectedPitch;
+import com.example.abcplayer.audio.PolyphonyMode;
 import com.example.abcplayer.audio.tempo_calibration.PlaybackTempoPlan;
 import com.example.abcplayer.audio.tempo_calibration.TempoCalibrator;
 import com.example.abcplayer.audio.tempo_calibration.TempoMetadata;
@@ -44,6 +45,9 @@ public class MainActivity extends Activity {
     private static final int MAX_THRESHOLD_MULTIPLIER = 400;
     private static final double MIN_RECORDABLE_BEATS = 1.0 / 8.0;
     private static final int[] INPUT_SAMPLE_RATE_CANDIDATES = {48000, 44100, 32000, 22050, 16000};
+    private static final int MIN_POLYPHONY_COUNT = 1;
+    private static final int MAX_POLYPHONY_COUNT = 8;
+    private static final int DEFAULT_POLYPHONY_COUNT = 4;
 
     private EditText editAbc;
     private EditText editTempo;
@@ -51,6 +55,10 @@ public class MainActivity extends Activity {
     private Button btnRecord;
     private SeekBar seekThreshold;
     private TextView txtThresholdValue;
+    private Button btnPolyphonyAuto;
+    private Button btnPolyphonyFixed;
+    private SeekBar seekPolyphonyCount;
+    private TextView txtPolyphonyCount;
     private TextView txtStatus;
     private ScrollView scrollStatus;
     private SpectrumView spectrumView;
@@ -60,6 +68,8 @@ public class MainActivity extends Activity {
     private AudioMonitorTask audioMonitorTask;
 
     private volatile int thresholdMultiplier = DEFAULT_THRESHOLD_MULTIPLIER;
+    private volatile PolyphonyMode polyphonyMode = PolyphonyMode.AUTOMATIC;
+    private volatile int polyphonyCount = DEFAULT_POLYPHONY_COUNT;
     private boolean shouldStartRecordingAfterPermission;
     private boolean monitoringWanted;
 
@@ -74,11 +84,16 @@ public class MainActivity extends Activity {
         btnRecord = findViewById(R.id.btnRecord);
         seekThreshold = findViewById(R.id.seekThreshold);
         txtThresholdValue = findViewById(R.id.txtThresholdValue);
+        btnPolyphonyAuto = findViewById(R.id.btnPolyphonyAuto);
+        btnPolyphonyFixed = findViewById(R.id.btnPolyphonyFixed);
+        seekPolyphonyCount = findViewById(R.id.seekPolyphonyCount);
+        txtPolyphonyCount = findViewById(R.id.txtPolyphonyCount);
         txtStatus = findViewById(R.id.txtStatus);
         scrollStatus = findViewById(R.id.scrollStatus);
         spectrumView = findViewById(R.id.spectrumView);
 
         configureThresholdSlider();
+        configurePolyphonyControls();
         spectrumView.updateSpectrum(new float[SpectrumView.NOTE_COUNT], 0f, "待機中");
 
         btnPlay.setOnClickListener(v -> onPlayClicked());
@@ -130,6 +145,52 @@ public class MainActivity extends Activity {
 
     private void updateThresholdLabel(int value) {
         txtThresholdValue.setText(String.format(Locale.US, "閾値倍率: %d", value));
+    }
+
+    private void configurePolyphonyControls() {
+        seekPolyphonyCount.setMax(MAX_POLYPHONY_COUNT - MIN_POLYPHONY_COUNT);
+        seekPolyphonyCount.setProgress(DEFAULT_POLYPHONY_COUNT - MIN_POLYPHONY_COUNT);
+        updatePolyphonyLabel(DEFAULT_POLYPHONY_COUNT);
+
+        btnPolyphonyAuto.setOnClickListener(v -> setPolyphonyMode(PolyphonyMode.AUTOMATIC));
+        btnPolyphonyFixed.setOnClickListener(v -> setPolyphonyMode(PolyphonyMode.FIXED));
+
+        seekPolyphonyCount.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                polyphonyCount = MIN_POLYPHONY_COUNT + progress;
+                updatePolyphonyLabel(polyphonyCount);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        updatePolyphonyModeButtons();
+    }
+
+    private void setPolyphonyMode(PolyphonyMode mode) {
+        polyphonyMode = mode;
+        updatePolyphonyModeButtons();
+    }
+
+    private void updatePolyphonyModeButtons() {
+        if (polyphonyMode == PolyphonyMode.AUTOMATIC) {
+            btnPolyphonyAuto.setEnabled(false);
+            btnPolyphonyFixed.setEnabled(true);
+            seekPolyphonyCount.setEnabled(false);
+        } else {
+            btnPolyphonyAuto.setEnabled(true);
+            btnPolyphonyFixed.setEnabled(false);
+            seekPolyphonyCount.setEnabled(true);
+        }
+    }
+
+    private void updatePolyphonyLabel(int count) {
+        txtPolyphonyCount.setText(String.valueOf(count));
     }
 
     private void onPlayClicked() {
@@ -444,6 +505,8 @@ public class MainActivity extends Activity {
         AudioMonitorTask() {
             sampleRate = resolveInputSampleRate();
             analysisConfig = AnalysisConfig.realtimeDefaults(sampleRate);
+            analysisConfig.polyphonyMode = polyphonyMode;
+            analysisConfig.fixedPolyphonyCount = polyphonyCount;
             analysisEngine = new AudioAnalysisEngine(analysisConfig);
         }
 

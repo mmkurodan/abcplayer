@@ -10,7 +10,7 @@
     <map id="UnusedResources">
         <entry
             name="model"
-            string="id[seekThreshold(U),txtThresholdValue(U),scrollStatus(U),editAbc(U),editTempo(U),txtStatus(U),btnPlay(U),spectrumView(U),btnRecord(U)],layout[activity_main(U)];;;;"/>
+            string="id[seekThreshold(U),txtPolyphonyCount(U),seekPolyphonyCount(U),txtThresholdValue(U),scrollStatus(U),editAbc(U),btnPolyphonyFixed(U),editTempo(U),txtStatus(U),btnPlay(U),spectrumView(U),btnRecord(U),btnPolyphonyAuto(U)],layout[activity_main(U)];;;;"/>
     </map>
 
 </incidents>

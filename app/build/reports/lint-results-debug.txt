@@ -31,10 +31,10 @@
    However, you may simply not be aware that a more recent version is
    available, and that is what this lint check helps find.
 
-/root/abcplayer/app/src/main/java/com/example/abcplayer/MainActivity.java:231: Warning: This AsyncTask class should be static or leaks might occur (com.example.abcplayer.MainActivity.PlayTask) [StaticFieldLeak]
-    private class PlayTask extends AsyncTask<String, Void, String> {
+/root/abcplayer/app/src/main/java/com/example/abcplayer/MainActivity.java:361: Warning: This AsyncTask class should be static or leaks might occur (com.example.abcplayer.MainActivity.PlayTask) [StaticFieldLeak]
+    private class PlayTask extends AsyncTask<PlaybackRequest, Void, String> {
                   ~~~~~~~~
-/root/abcplayer/app/src/main/java/com/example/abcplayer/MainActivity.java:334: Warning: This AsyncTask class should be static or leaks might occur (com.example.abcplayer.MainActivity.AudioMonitorTask) [StaticFieldLeak]
+/root/abcplayer/app/src/main/java/com/example/abcplayer/MainActivity.java:486: Warning: This AsyncTask class should be static or leaks might occur (com.example.abcplayer.MainActivity.AudioMonitorTask) [StaticFieldLeak]
     private class AudioMonitorTask extends AsyncTask<Void, MonitorUpdate, String> {
                   ~~~~~~~~~~~~~~~~
 
@@ -104,7 +104,7 @@
 
    https://developer.android.com/guide/topics/text/autofill.html
 
-/root/abcplayer/app/src/main/java/com/example/abcplayer/MainActivity.java:129: Warning: String literal in setText can not be translated. Use Android resources instead. [SetTextI18n]
+/root/abcplayer/app/src/main/java/com/example/abcplayer/MainActivity.java:199: Warning: String literal in setText can not be translated. Use Android resources instead. [SetTextI18n]
             txtStatus.setText("ABC notation が空です");
                               ~~~~~~~~~~~~~~~~~~~
 
@@ -139,7 +139,22 @@
 /root/abcplayer/app/src/main/res/layout/activity_main.xml:63: Warning: Hardcoded string "閾値倍率: 200", should use @string resource [HardcodedText]
         android:text="閾値倍率: 200" />
         ~~~~~~~~~~~~~~~~~~~~~~~~
-/root/abcplayer/app/src/main/res/layout/activity_main.xml:90: Warning: Hardcoded string "ステータス", should use @string resource [HardcodedText]
+/root/abcplayer/app/src/main/res/layout/activity_main.xml:80: Warning: Hardcoded string "和音モード:", should use @string resource [HardcodedText]
+            android:text="和音モード:" />
+            ~~~~~~~~~~~~~~~~~~~~~
+/root/abcplayer/app/src/main/res/layout/activity_main.xml:88: Warning: Hardcoded string "自動", should use @string resource [HardcodedText]
+            android:text="自動" />
+            ~~~~~~~~~~~~~~~~~
+/root/abcplayer/app/src/main/res/layout/activity_main.xml:96: Warning: Hardcoded string "固定", should use @string resource [HardcodedText]
+            android:text="固定" />
+            ~~~~~~~~~~~~~~~~~
+/root/abcplayer/app/src/main/res/layout/activity_main.xml:109: Warning: Hardcoded string "固定数:", should use @string resource [HardcodedText]
+            android:text="固定数:" />
+            ~~~~~~~~~~~~~~~~~~~
+/root/abcplayer/app/src/main/res/layout/activity_main.xml:123: Warning: Hardcoded string "4", should use @string resource [HardcodedText]
+            android:text="4"
+            ~~~~~~~~~~~~~~~~
+/root/abcplayer/app/src/main/res/layout/activity_main.xml:147: Warning: Hardcoded string "ステータス", should use @string resource [HardcodedText]
             android:text="ステータス" />
             ~~~~~~~~~~~~~~~~~~~~
 
@@ -167,4 +182,4 @@
    If you have started adding RTL attributes, but have not yet finished the
    migration, you can set the attribute to false to satisfy this lint check.
 
-0 errors, 18 warnings
+0 errors, 23 warnings

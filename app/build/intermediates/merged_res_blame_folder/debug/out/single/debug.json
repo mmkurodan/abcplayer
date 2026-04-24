@@ -2,9 +2,5 @@
     {
         "merged": "com.example.abcplayer.app-merged_res-7:/layout_activity_main.xml.flat",
         "source": "com.example.abcplayer.app-main-9:/layout/activity_main.xml"
-    },
-    {
-        "merged": "/root/.gradle/daemon/8.12/com.example.abcplayer.app-merged_res-7:/layout_activity_main.xml.flat",
-        "source": "/root/.gradle/daemon/8.12/com.example.abcplayer.app-main-9:/layout/activity_main.xml"
     }
 ]

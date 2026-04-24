@@ -104,6 +104,8 @@ id actions
 id async
 id blocking
 id btnPlay
+id btnPolyphonyAuto
+id btnPolyphonyFixed
 id btnRecord
 id chronometer
 id dialog_button
@@ -125,6 +127,7 @@ id notification_main_column_container
 id right_icon
 id right_side
 id scrollStatus
+id seekPolyphonyCount
 id seekThreshold
 id spectrumView
 id tag_accessibility_actions
@@ -144,6 +147,7 @@ id text
 id text2
 id time
 id title
+id txtPolyphonyCount
 id txtStatus
 id txtThresholdValue
 id view_tree_lifecycle_owner

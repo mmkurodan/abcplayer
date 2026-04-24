@@ -24,6 +24,8 @@ public class AnalysisConfig {
     public double minimumOnsetIntervalMs = 90.0;
     public int displayMinMidi = 36;
     public int displayMaxMidi = 96;
+    public PolyphonyMode polyphonyMode = PolyphonyMode.AUTOMATIC;
+    public int fixedPolyphonyCount = 4;
 
     public static AnalysisConfig realtimeDefaults(int sampleRate) {
         AnalysisConfig config = new AnalysisConfig();

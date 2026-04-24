@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.example.abcplayer.audio.harmonic_filter.HarmonicFilterTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-04-24T18:59:10" hostname="localhost" time="0.009">
+  <properties/>
+  <testcase name="automaticModeRespectsMaxFundamentals" classname="com.example.abcplayer.audio.harmonic_filter.HarmonicFilterTest" time="0.001"/>
+  <testcase name="fixedModeCapToMaxFundamentals" classname="com.example.abcplayer.audio.harmonic_filter.HarmonicFilterTest" time="0.002"/>
+  <testcase name="fixedModeLimitsToSpecifiedCount" classname="com.example.abcplayer.audio.harmonic_filter.HarmonicFilterTest" time="0.002"/>
+  <testcase name="removesIntegerMultipleHarmonics" classname="com.example.abcplayer.audio.harmonic_filter.HarmonicFilterTest" time="0.001"/>
+  <testcase name="fixedModeWithMinimumCount" classname="com.example.abcplayer.audio.harmonic_filter.HarmonicFilterTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

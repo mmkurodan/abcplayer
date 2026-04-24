@@ -177,9 +177,9 @@ document.getElementById(id).style.display = 'none';
 <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
   <header class="mdl-layout__header">
     <div class="mdl-layout__header-row">
-      <span class="mdl-layout-title">Lint Report: 18 warnings</span>
+      <span class="mdl-layout-title">Lint Report: 23 warnings</span>
       <div class="mdl-layout-spacer"></div>
-      <nav class="mdl-navigation mdl-layout--large-screen-only">Check performed at Sat Mar 21 05:53:44 UTC 2026 by AGP (8.2.2)</nav>
+      <nav class="mdl-navigation mdl-layout--large-screen-only">Check performed at Fri Apr 24 18:59:15 UTC 2026 by AGP (8.2.2)</nav>
     </div>
   </header>
   <div class="mdl-layout__drawer">
@@ -193,7 +193,7 @@ document.getElementById(id).style.display = 'none';
       <a class="mdl-navigation__link" href="#ButtonStyle"><i class="material-icons warning-icon">warning</i>Button should be borderless (2)</a>
       <a class="mdl-navigation__link" href="#Autofill"><i class="material-icons warning-icon">warning</i>Use Autofill (2)</a>
       <a class="mdl-navigation__link" href="#SetTextI18n"><i class="material-icons warning-icon">warning</i>TextView Internationalization (1)</a>
-      <a class="mdl-navigation__link" href="#HardcodedText"><i class="material-icons warning-icon">warning</i>Hardcoded text (7)</a>
+      <a class="mdl-navigation__link" href="#HardcodedText"><i class="material-icons warning-icon">warning</i>Hardcoded text (12)</a>
       <a class="mdl-navigation__link" href="#RtlEnabled"><i class="material-icons warning-icon">warning</i>Using RTL attributes without enabling RTL support (1)</a>
     </nav>
   </div>
@@ -239,7 +239,7 @@ document.getElementById(id).style.display = 'none';
 <td class="countColumn">1</td><td class="issueColumn"><i class="material-icons warning-icon">warning</i>
 <a href="#SetTextI18n">SetTextI18n</a>: TextView Internationalization</td></tr>
 <tr>
-<td class="countColumn">7</td><td class="issueColumn"><i class="material-icons warning-icon">warning</i>
+<td class="countColumn">12</td><td class="issueColumn"><i class="material-icons warning-icon">warning</i>
 <a href="#HardcodedText">HardcodedText</a>: Hardcoded text</td></tr>
 <tr><td class="countColumn"></td><td class="categoryColumn"><a href="#Internationalization:Bidirectional Text">Internationalization:Bidirectional Text</a>
 </td></tr>
@@ -323,7 +323,8 @@ Dismiss</button>            </div>
 <span class="lineno"> 24 </span>dependencies {
 <span class="lineno"> 25 </span>    implementation <span class="string">'com.github.wendykierp:JTransforms:3.1'</span>
 <span class="caretline"><span class="lineno"> 26 </span>    implementation <span class="warning"><span class="string">'androidx.core:core:1.12.0'</span></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno"> 27 </span>}
+<span class="lineno"> 27 </span>    testImplementation <span class="string">'junit:junit:4.13.2'</span>
+<span class="lineno"> 28 </span>}
 </pre>
 
 </div>
@@ -364,24 +365,23 @@ Dismiss</button>            </div>
               <div class="mdl-card__supporting-text">
 <div class="issue">
 <div class="warningslist">
-<span class="location"><a href="../../src/main/java/com/example/abcplayer/MainActivity.java">../../src/main/java/com/example/abcplayer/MainActivity.java</a>:231</span>: <span class="message">This <code>AsyncTask</code> class should be static or leaks might occur (com.example.abcplayer.MainActivity.PlayTask)</span><br /><pre class="errorlines">
-<span class="lineno"> 228 </span>        stopAudioMonitoring();
-<span class="lineno"> 229 </span>    }
-<span class="lineno"> 230 </span>
-<span class="caretline"><span class="lineno"> 231 </span>    <span class="keyword">private</span> <span class="keyword">class</span> <span class="warning">PlayTask</span> <span class="keyword">extends</span> AsyncTask&lt;String, Void, String> {&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno"> 232 </span>        <span class="annotation">@Override</span>
-<span class="lineno"> 233 </span>        <span class="keyword">protected</span> String doInBackground(String... params) {
-<span class="lineno"> 234 </span>            String abc = params[<span class="number">0</span>];
+<span class="location"><a href="../../src/main/java/com/example/abcplayer/MainActivity.java">../../src/main/java/com/example/abcplayer/MainActivity.java</a>:361</span>: <span class="message">This <code>AsyncTask</code> class should be static or leaks might occur (com.example.abcplayer.MainActivity.PlayTask)</span><br /><pre class="errorlines">
+<span class="lineno"> 358 </span>        stopAudioMonitoring();
+<span class="lineno"> 359 </span>    }
+<span class="lineno"> 360 </span>
+<span class="caretline"><span class="lineno"> 361 </span>    <span class="keyword">private</span> <span class="keyword">class</span> <span class="warning">PlayTask</span> <span class="keyword">extends</span> AsyncTask&lt;PlaybackRequest, Void, String> {&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno"> 362 </span>        <span class="annotation">@Override</span>
+<span class="lineno"> 363 </span>        <span class="keyword">protected</span> String doInBackground(PlaybackRequest... params) {
+<span class="lineno"> 364 </span>            PlaybackRequest request = params[<span class="number">0</span>];
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/example/abcplayer/MainActivity.java">../../src/main/java/com/example/abcplayer/MainActivity.java</a>:334</span>: <span class="message">This <code>AsyncTask</code> class should be static or leaks might occur (com.example.abcplayer.MainActivity.AudioMonitorTask)</span><br /><pre class="errorlines">
-<span class="lineno"> 331 </span>        }
-<span class="lineno"> 332 </span>    }
-<span class="lineno"> 333 </span>
-<span class="caretline"><span class="lineno"> 334 </span>    <span class="keyword">private</span> <span class="keyword">class</span> <span class="warning">AudioMonitorTask</span> <span class="keyword">extends</span> AsyncTask&lt;Void, MonitorUpdate, String> {&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno"> 335 </span>        <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> SAMPLE_RATE = <span class="number">44100</span>;
-<span class="lineno"> 336 </span>        <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> FFT_SIZE = <span class="number">2048</span>;
-<span class="lineno"> 337 </span>        <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO;
+<span class="location"><a href="../../src/main/java/com/example/abcplayer/MainActivity.java">../../src/main/java/com/example/abcplayer/MainActivity.java</a>:486</span>: <span class="message">This <code>AsyncTask</code> class should be static or leaks might occur (com.example.abcplayer.MainActivity.AudioMonitorTask)</span><br /><pre class="errorlines">
+<span class="lineno"> 483 </span>        }
+<span class="lineno"> 484 </span>    }
+<span class="lineno"> 485 </span>
+<span class="caretline"><span class="lineno"> 486 </span>    <span class="keyword">private</span> <span class="keyword">class</span> <span class="warning">AudioMonitorTask</span> <span class="keyword">extends</span> AsyncTask&lt;Void, MonitorUpdate, String> {&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno"> 487 </span>        <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO;
+<span class="lineno"> 488 </span>        <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
 </pre>
 
 </div>
@@ -479,22 +479,22 @@ Dismiss</button>            </div>
 <div class="issue">
 <div class="warningslist">
 <span class="location"><a href="../../src/main/res/layout/activity_main.xml">../../src/main/res/layout/activity_main.xml</a>:22</span>: <span class="message">Buttons in button bars should be borderless; use <code>style="?android:attr/buttonBarButtonStyle"</code> (and <code>?android:attr/buttonBarStyle</code> on the parent)</span><br /><pre class="errorlines">
-<span class="lineno"> 19 </span>        <span class="prefix">android:</span><span class="attribute">layout_marginTop</span>=<span class="value">"8dp"</span>
-<span class="lineno"> 20 </span>        <span class="prefix">android:</span><span class="attribute">orientation</span>=<span class="value">"horizontal"</span>>
-<span class="lineno"> 21 </span>
-<span class="caretline"><span class="lineno"> 22 </span>        <span class="tag">&lt;</span><span class="warning"><span class="tag">Button</span></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="attribute">
-</span><span class="lineno"> 23 </span><span class="attribute">            </span><span class="prefix">android:</span><span class="attribute">id</span>=<span class="value">"@+id/btnPlay"</span>
-<span class="lineno"> 24 </span>            <span class="prefix">android:</span><span class="attribute">layout_width</span>=<span class="value">"0dp"</span>
-<span class="lineno"> 25 </span>            <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span></pre>
+<span class="lineno">  19 </span>        <span class="prefix">android:</span><span class="attribute">layout_marginTop</span>=<span class="value">"8dp"</span>
+<span class="lineno">  20 </span>        <span class="prefix">android:</span><span class="attribute">orientation</span>=<span class="value">"horizontal"</span>>
+<span class="lineno">  21 </span>
+<span class="caretline"><span class="lineno">  22 </span>        <span class="tag">&lt;</span><span class="warning"><span class="tag">Button</span></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="attribute">
+</span><span class="lineno">  23 </span><span class="attribute">            </span><span class="prefix">android:</span><span class="attribute">id</span>=<span class="value">"@+id/btnPlay"</span>
+<span class="lineno">  24 </span>            <span class="prefix">android:</span><span class="attribute">layout_width</span>=<span class="value">"0dp"</span>
+<span class="lineno">  25 </span>            <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span></pre>
 
 <span class="location"><a href="../../src/main/res/layout/activity_main.xml">../../src/main/res/layout/activity_main.xml</a>:29</span>: <span class="message">Buttons in button bars should be borderless; use <code>style="?android:attr/buttonBarButtonStyle"</code> (and <code>?android:attr/buttonBarStyle</code> on the parent)</span><br /><pre class="errorlines">
-<span class="lineno"> 26 </span>            <span class="prefix">android:</span><span class="attribute">layout_weight</span>=<span class="value">"1"</span>
-<span class="lineno"> 27 </span>            <span class="prefix">android:</span><span class="attribute">text</span>=<span class="value">"再生"</span> />
-<span class="lineno"> 28 </span>
-<span class="caretline"><span class="lineno"> 29 </span>        <span class="tag">&lt;</span><span class="warning"><span class="tag">Button</span></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="attribute">
-</span><span class="lineno"> 30 </span><span class="attribute">            </span><span class="prefix">android:</span><span class="attribute">id</span>=<span class="value">"@+id/btnRecord"</span>
-<span class="lineno"> 31 </span>            <span class="prefix">android:</span><span class="attribute">layout_width</span>=<span class="value">"0dp"</span>
-<span class="lineno"> 32 </span>            <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span></pre>
+<span class="lineno">  26 </span>            <span class="prefix">android:</span><span class="attribute">layout_weight</span>=<span class="value">"1"</span>
+<span class="lineno">  27 </span>            <span class="prefix">android:</span><span class="attribute">text</span>=<span class="value">"再生"</span> />
+<span class="lineno">  28 </span>
+<span class="caretline"><span class="lineno">  29 </span>        <span class="tag">&lt;</span><span class="warning"><span class="tag">Button</span></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="attribute">
+</span><span class="lineno">  30 </span><span class="attribute">            </span><span class="prefix">android:</span><span class="attribute">id</span>=<span class="value">"@+id/btnRecord"</span>
+<span class="lineno">  31 </span>            <span class="prefix">android:</span><span class="attribute">layout_width</span>=<span class="value">"0dp"</span>
+<span class="lineno">  32 </span>            <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span></pre>
 
 </div>
 <div class="metadata"><div class="explanation" id="explanationButtonStyle" style="display: none;">
@@ -534,22 +534,22 @@ Dismiss</button>            </div>
 <div class="issue">
 <div class="warningslist">
 <span class="location"><a href="../../src/main/res/layout/activity_main.xml">../../src/main/res/layout/activity_main.xml</a>:8</span>: <span class="message">Missing <code>autofillHints</code> attribute</span><br /><pre class="errorlines">
-<span class="lineno">  5 </span>    <span class="prefix">android:</span><span class="attribute">orientation</span>=<span class="value">"vertical"</span>
-<span class="lineno">  6 </span>    <span class="prefix">android:</span><span class="attribute">padding</span>=<span class="value">"16dp"</span>>
-<span class="lineno">  7 </span>
-<span class="caretline"><span class="lineno">  8 </span>    <span class="tag">&lt;</span><span class="warning"><span class="tag">EditText</span></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="attribute">
-</span><span class="lineno">  9 </span><span class="attribute">        </span><span class="prefix">android:</span><span class="attribute">id</span>=<span class="value">"@+id/editAbc"</span>
-<span class="lineno"> 10 </span>        <span class="prefix">android:</span><span class="attribute">layout_width</span>=<span class="value">"match_parent"</span>
-<span class="lineno"> 11 </span>        <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"120dp"</span></pre>
+<span class="lineno">   5 </span>    <span class="prefix">android:</span><span class="attribute">orientation</span>=<span class="value">"vertical"</span>
+<span class="lineno">   6 </span>    <span class="prefix">android:</span><span class="attribute">padding</span>=<span class="value">"16dp"</span>>
+<span class="lineno">   7 </span>
+<span class="caretline"><span class="lineno">   8 </span>    <span class="tag">&lt;</span><span class="warning"><span class="tag">EditText</span></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="attribute">
+</span><span class="lineno">   9 </span><span class="attribute">        </span><span class="prefix">android:</span><span class="attribute">id</span>=<span class="value">"@+id/editAbc"</span>
+<span class="lineno">  10 </span>        <span class="prefix">android:</span><span class="attribute">layout_width</span>=<span class="value">"match_parent"</span>
+<span class="lineno">  11 </span>        <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"120dp"</span></pre>
 
 <span class="location"><a href="../../src/main/res/layout/activity_main.xml">../../src/main/res/layout/activity_main.xml</a>:49</span>: <span class="message">Missing <code>autofillHints</code> attribute</span><br /><pre class="errorlines">
-<span class="lineno"> 46 </span>            <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span>
-<span class="lineno"> 47 </span>            <span class="prefix">android:</span><span class="attribute">text</span>=<span class="value">"テンポ (BPM)"</span> />
-<span class="lineno"> 48 </span>
-<span class="caretline"><span class="lineno"> 49 </span>        <span class="tag">&lt;</span><span class="warning"><span class="tag">EditText</span></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="attribute">
-</span><span class="lineno"> 50 </span><span class="attribute">            </span><span class="prefix">android:</span><span class="attribute">id</span>=<span class="value">"@+id/editTempo"</span>
-<span class="lineno"> 51 </span>            <span class="prefix">android:</span><span class="attribute">layout_width</span>=<span class="value">"96dp"</span>
-<span class="lineno"> 52 </span>            <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span></pre>
+<span class="lineno">  46 </span>            <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span>
+<span class="lineno">  47 </span>            <span class="prefix">android:</span><span class="attribute">text</span>=<span class="value">"テンポ (BPM)"</span> />
+<span class="lineno">  48 </span>
+<span class="caretline"><span class="lineno">  49 </span>        <span class="tag">&lt;</span><span class="warning"><span class="tag">EditText</span></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="attribute">
+</span><span class="lineno">  50 </span><span class="attribute">            </span><span class="prefix">android:</span><span class="attribute">id</span>=<span class="value">"@+id/editTempo"</span>
+<span class="lineno">  51 </span>            <span class="prefix">android:</span><span class="attribute">layout_width</span>=<span class="value">"96dp"</span>
+<span class="lineno">  52 </span>            <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span></pre>
 
 </div>
 <div class="metadata"><div class="explanation" id="explanationAutofill" style="display: none;">
@@ -594,13 +594,13 @@ Dismiss</button>            </div>
               <div class="mdl-card__supporting-text">
 <div class="issue">
 <div class="warningslist">
-<span class="location"><a href="../../src/main/java/com/example/abcplayer/MainActivity.java">../../src/main/java/com/example/abcplayer/MainActivity.java</a>:129</span>: <span class="message">String literal in <code>setText</code> can not be translated. Use Android resources instead.</span><br /><pre class="errorlines">
-<span class="lineno"> 126 </span>    <span class="keyword">private</span> <span class="keyword">void</span> onPlayClicked() {
-<span class="lineno"> 127 </span>        String abc = editAbc.getText().toString().trim();
-<span class="lineno"> 128 </span>        <span class="keyword">if</span> (abc.isEmpty()) {
-<span class="caretline"><span class="lineno"> 129 </span>            txtStatus.setText(<span class="warning"><span class="string">"ABC notation が空です"</span></span>);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno"> 130 </span>            <span class="keyword">return</span>;
-<span class="lineno"> 131 </span>        }
+<span class="location"><a href="../../src/main/java/com/example/abcplayer/MainActivity.java">../../src/main/java/com/example/abcplayer/MainActivity.java</a>:199</span>: <span class="message">String literal in <code>setText</code> can not be translated. Use Android resources instead.</span><br /><pre class="errorlines">
+<span class="lineno"> 196 </span>    <span class="keyword">private</span> <span class="keyword">void</span> onPlayClicked() {
+<span class="lineno"> 197 </span>        String abc = editAbc.getText().toString().trim();
+<span class="lineno"> 198 </span>        <span class="keyword">if</span> (abc.isEmpty()) {
+<span class="caretline"><span class="lineno"> 199 </span>            txtStatus.setText(<span class="warning"><span class="string">"ABC notation が空です"</span></span>);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno"> 200 </span>            <span class="keyword">return</span>;
+<span class="lineno"> 201 </span>        }
 </pre>
 
 </div>
@@ -643,68 +643,116 @@ Dismiss</button>            </div>
 <div class="issue">
 <div class="warningslist">
 <span class="location"><a href="../../src/main/res/layout/activity_main.xml">../../src/main/res/layout/activity_main.xml</a>:13</span>: <span class="message">Hardcoded string "ABC Notation &#12434;&#20837;&#21147;", should use <code>@string</code> resource</span><br /><pre class="errorlines">
-<span class="lineno"> 10 </span>        <span class="prefix">android:</span><span class="attribute">layout_width</span>=<span class="value">"match_parent"</span>
-<span class="lineno"> 11 </span>        <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"120dp"</span>
-<span class="lineno"> 12 </span>        <span class="prefix">android:</span><span class="attribute">gravity</span>=<span class="value">"top|start"</span>
-<span class="caretline"><span class="lineno"> 13 </span>        <span class="warning"><span class="prefix">android:</span><span class="attribute">hint</span>=<span class="value">"ABC Notation を入力"</span></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno"> 14 </span>        <span class="prefix">android:</span><span class="attribute">inputType</span>=<span class="value">"textMultiLine"</span> />
-<span class="lineno"> 15 </span>
-<span class="lineno"> 16 </span>    <span class="tag">&lt;LinearLayout</span></pre>
+<span class="lineno">  10 </span>        <span class="prefix">android:</span><span class="attribute">layout_width</span>=<span class="value">"match_parent"</span>
+<span class="lineno">  11 </span>        <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"120dp"</span>
+<span class="lineno">  12 </span>        <span class="prefix">android:</span><span class="attribute">gravity</span>=<span class="value">"top|start"</span>
+<span class="caretline"><span class="lineno">  13 </span>        <span class="warning"><span class="prefix">android:</span><span class="attribute">hint</span>=<span class="value">"ABC Notation を入力"</span></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno">  14 </span>        <span class="prefix">android:</span><span class="attribute">inputType</span>=<span class="value">"textMultiLine"</span> />
+<span class="lineno">  15 </span>
+<span class="lineno">  16 </span>    <span class="tag">&lt;LinearLayout</span></pre>
 
 <span class="location"><a href="../../src/main/res/layout/activity_main.xml">../../src/main/res/layout/activity_main.xml</a>:27</span>: <span class="message">Hardcoded string "&#20877;&#29983;", should use <code>@string</code> resource</span><br /><pre class="errorlines">
-<span class="lineno"> 24 </span>            <span class="prefix">android:</span><span class="attribute">layout_width</span>=<span class="value">"0dp"</span>
-<span class="lineno"> 25 </span>            <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span>
-<span class="lineno"> 26 </span>            <span class="prefix">android:</span><span class="attribute">layout_weight</span>=<span class="value">"1"</span>
-<span class="caretline"><span class="lineno"> 27 </span>            <span class="warning"><span class="prefix">android:</span><span class="attribute">text</span>=<span class="value">"再生"</span></span> />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno"> 28 </span>
-<span class="lineno"> 29 </span>        <span class="tag">&lt;Button</span><span class="attribute">
-</span><span class="lineno"> 30 </span><span class="attribute">            </span><span class="prefix">android:</span><span class="attribute">id</span>=<span class="value">"@+id/btnRecord"</span></pre>
+<span class="lineno">  24 </span>            <span class="prefix">android:</span><span class="attribute">layout_width</span>=<span class="value">"0dp"</span>
+<span class="lineno">  25 </span>            <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span>
+<span class="lineno">  26 </span>            <span class="prefix">android:</span><span class="attribute">layout_weight</span>=<span class="value">"1"</span>
+<span class="caretline"><span class="lineno">  27 </span>            <span class="warning"><span class="prefix">android:</span><span class="attribute">text</span>=<span class="value">"再生"</span></span> />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno">  28 </span>
+<span class="lineno">  29 </span>        <span class="tag">&lt;Button</span><span class="attribute">
+</span><span class="lineno">  30 </span><span class="attribute">            </span><span class="prefix">android:</span><span class="attribute">id</span>=<span class="value">"@+id/btnRecord"</span></pre>
 
 <span class="location"><a href="../../src/main/res/layout/activity_main.xml">../../src/main/res/layout/activity_main.xml</a>:34</span>: <span class="message">Hardcoded string "&#37682;&#38899;", should use <code>@string</code> resource</span><br /><pre class="errorlines">
-<span class="lineno"> 31 </span>            <span class="prefix">android:</span><span class="attribute">layout_width</span>=<span class="value">"0dp"</span>
-<span class="lineno"> 32 </span>            <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span>
-<span class="lineno"> 33 </span>            <span class="prefix">android:</span><span class="attribute">layout_weight</span>=<span class="value">"1"</span>
-<span class="caretline"><span class="lineno"> 34 </span>            <span class="warning"><span class="prefix">android:</span><span class="attribute">text</span>=<span class="value">"録音"</span></span> />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno"> 35 </span>    <span class="tag">&lt;/LinearLayout></span>
-<span class="lineno"> 36 </span>
-<span class="lineno"> 37 </span>    <span class="tag">&lt;LinearLayout</span></pre>
+<span class="lineno">  31 </span>            <span class="prefix">android:</span><span class="attribute">layout_width</span>=<span class="value">"0dp"</span>
+<span class="lineno">  32 </span>            <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span>
+<span class="lineno">  33 </span>            <span class="prefix">android:</span><span class="attribute">layout_weight</span>=<span class="value">"1"</span>
+<span class="caretline"><span class="lineno">  34 </span>            <span class="warning"><span class="prefix">android:</span><span class="attribute">text</span>=<span class="value">"録音"</span></span> />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno">  35 </span>    <span class="tag">&lt;/LinearLayout></span>
+<span class="lineno">  36 </span>
+<span class="lineno">  37 </span>    <span class="tag">&lt;LinearLayout</span></pre>
 
 <span class="location"><a href="../../src/main/res/layout/activity_main.xml">../../src/main/res/layout/activity_main.xml</a>:47</span>: <span class="message">Hardcoded string "&#12486;&#12531;&#12509; (BPM)", should use <code>@string</code> resource</span><br /><pre class="errorlines">
-<span class="lineno"> 44 </span>        <span class="tag">&lt;TextView</span><span class="attribute">
-</span><span class="lineno"> 45 </span><span class="attribute">            </span><span class="prefix">android:</span><span class="attribute">layout_width</span>=<span class="value">"wrap_content"</span>
-<span class="lineno"> 46 </span>            <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span>
-<span class="caretline"><span class="lineno"> 47 </span>            <span class="warning"><span class="prefix">android:</span><span class="attribute">text</span>=<span class="value">"テンポ (BPM)"</span></span> />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno"> 48 </span>
-<span class="lineno"> 49 </span>        <span class="tag">&lt;EditText</span><span class="attribute">
-</span><span class="lineno"> 50 </span><span class="attribute">            </span><span class="prefix">android:</span><span class="attribute">id</span>=<span class="value">"@+id/editTempo"</span></pre>
+<span class="lineno">  44 </span>        <span class="tag">&lt;TextView</span><span class="attribute">
+</span><span class="lineno">  45 </span><span class="attribute">            </span><span class="prefix">android:</span><span class="attribute">layout_width</span>=<span class="value">"wrap_content"</span>
+<span class="lineno">  46 </span>            <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span>
+<span class="caretline"><span class="lineno">  47 </span>            <span class="warning"><span class="prefix">android:</span><span class="attribute">text</span>=<span class="value">"テンポ (BPM)"</span></span> />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno">  48 </span>
+<span class="lineno">  49 </span>        <span class="tag">&lt;EditText</span><span class="attribute">
+</span><span class="lineno">  50 </span><span class="attribute">            </span><span class="prefix">android:</span><span class="attribute">id</span>=<span class="value">"@+id/editTempo"</span></pre>
 
 <span class="location"><a href="../../src/main/res/layout/activity_main.xml">../../src/main/res/layout/activity_main.xml</a>:55</span>: <span class="message">Hardcoded string "120", should use <code>@string</code> resource</span><br /><pre class="errorlines">
-<span class="lineno"> 52 </span>            <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span>
-<span class="lineno"> 53 </span>            <span class="prefix">android:</span><span class="attribute">layout_marginStart</span>=<span class="value">"8dp"</span>
-<span class="lineno"> 54 </span>            <span class="prefix">android:</span><span class="attribute">inputType</span>=<span class="value">"numberDecimal"</span>
-<span class="caretline"><span class="lineno"> 55 </span>            <span class="warning"><span class="prefix">android:</span><span class="attribute">text</span>=<span class="value">"120"</span></span> />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno"> 56 </span>    <span class="tag">&lt;/LinearLayout></span>
-<span class="lineno"> 57 </span>
-<span class="lineno"> 58 </span>    <span class="tag">&lt;TextView</span></pre>
+<span class="lineno">  52 </span>            <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span>
+<span class="lineno">  53 </span>            <span class="prefix">android:</span><span class="attribute">layout_marginStart</span>=<span class="value">"8dp"</span>
+<span class="lineno">  54 </span>            <span class="prefix">android:</span><span class="attribute">inputType</span>=<span class="value">"numberDecimal"</span>
+<span class="caretline"><span class="lineno">  55 </span>            <span class="warning"><span class="prefix">android:</span><span class="attribute">text</span>=<span class="value">"120"</span></span> />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno">  56 </span>    <span class="tag">&lt;/LinearLayout></span>
+<span class="lineno">  57 </span>
+<span class="lineno">  58 </span>    <span class="tag">&lt;TextView</span></pre>
 
+<button class="mdl-button mdl-js-button mdl-button--primary" id="HardcodedTextDivLink" onclick="reveal('HardcodedTextDiv');" />+ 7 More Occurrences...</button>
+<div id="HardcodedTextDiv" style="display: none">
 <span class="location"><a href="../../src/main/res/layout/activity_main.xml">../../src/main/res/layout/activity_main.xml</a>:63</span>: <span class="message">Hardcoded string "&#38334;&#20516;&#20493;&#29575;: 200", should use <code>@string</code> resource</span><br /><pre class="errorlines">
-<span class="lineno"> 60 </span>        <span class="prefix">android:</span><span class="attribute">layout_width</span>=<span class="value">"match_parent"</span>
-<span class="lineno"> 61 </span>        <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span>
-<span class="lineno"> 62 </span>        <span class="prefix">android:</span><span class="attribute">layout_marginTop</span>=<span class="value">"8dp"</span>
-<span class="caretline"><span class="lineno"> 63 </span>        <span class="warning"><span class="prefix">android:</span><span class="attribute">text</span>=<span class="value">"閾値倍率: 200"</span></span> />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno"> 64 </span>
-<span class="lineno"> 65 </span>    <span class="tag">&lt;SeekBar</span><span class="attribute">
-</span><span class="lineno"> 66 </span><span class="attribute">        </span><span class="prefix">android:</span><span class="attribute">id</span>=<span class="value">"@+id/seekThreshold"</span></pre>
+<span class="lineno">  60 </span>        <span class="prefix">android:</span><span class="attribute">layout_width</span>=<span class="value">"match_parent"</span>
+<span class="lineno">  61 </span>        <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span>
+<span class="lineno">  62 </span>        <span class="prefix">android:</span><span class="attribute">layout_marginTop</span>=<span class="value">"8dp"</span>
+<span class="caretline"><span class="lineno">  63 </span>        <span class="warning"><span class="prefix">android:</span><span class="attribute">text</span>=<span class="value">"閾値倍率: 200"</span></span> />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno">  64 </span>
+<span class="lineno">  65 </span>    <span class="tag">&lt;SeekBar</span><span class="attribute">
+</span><span class="lineno">  66 </span><span class="attribute">        </span><span class="prefix">android:</span><span class="attribute">id</span>=<span class="value">"@+id/seekThreshold"</span></pre>
 
-<span class="location"><a href="../../src/main/res/layout/activity_main.xml">../../src/main/res/layout/activity_main.xml</a>:90</span>: <span class="message">Hardcoded string "&#12473;&#12486;&#12540;&#12479;&#12473;", should use <code>@string</code> resource</span><br /><pre class="errorlines">
-<span class="lineno"> 87 </span>            <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span>
-<span class="lineno"> 88 </span>            <span class="prefix">android:</span><span class="attribute">paddingBottom</span>=<span class="value">"8dp"</span>
-<span class="lineno"> 89 </span>            <span class="prefix">android:</span><span class="attribute">paddingTop</span>=<span class="value">"8dp"</span>
-<span class="caretline"><span class="lineno"> 90 </span>            <span class="warning"><span class="prefix">android:</span><span class="attribute">text</span>=<span class="value">"ステータス"</span></span> />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno"> 91 </span>    <span class="tag">&lt;/ScrollView></span>
-<span class="lineno"> 92 </span>
-<span class="lineno"> 93 </span><span class="tag">&lt;/LinearLayout></span></pre>
+<span class="location"><a href="../../src/main/res/layout/activity_main.xml">../../src/main/res/layout/activity_main.xml</a>:80</span>: <span class="message">Hardcoded string "&#21644;&#38899;&#12514;&#12540;&#12489;:", should use <code>@string</code> resource</span><br /><pre class="errorlines">
+<span class="lineno">  77 </span>        <span class="tag">&lt;TextView</span><span class="attribute">
+</span><span class="lineno">  78 </span><span class="attribute">            </span><span class="prefix">android:</span><span class="attribute">layout_width</span>=<span class="value">"wrap_content"</span>
+<span class="lineno">  79 </span>            <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span>
+<span class="caretline"><span class="lineno">  80 </span>            <span class="warning"><span class="prefix">android:</span><span class="attribute">text</span>=<span class="value">"和音モード:"</span></span> />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno">  81 </span>
+<span class="lineno">  82 </span>        <span class="tag">&lt;Button</span><span class="attribute">
+</span><span class="lineno">  83 </span><span class="attribute">            </span><span class="prefix">android:</span><span class="attribute">id</span>=<span class="value">"@+id/btnPolyphonyAuto"</span></pre>
 
+<span class="location"><a href="../../src/main/res/layout/activity_main.xml">../../src/main/res/layout/activity_main.xml</a>:88</span>: <span class="message">Hardcoded string "&#33258;&#21205;", should use <code>@string</code> resource</span><br /><pre class="errorlines">
+<span class="lineno">  85 </span>            <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span>
+<span class="lineno">  86 </span>            <span class="prefix">android:</span><span class="attribute">layout_weight</span>=<span class="value">"1"</span>
+<span class="lineno">  87 </span>            <span class="prefix">android:</span><span class="attribute">layout_marginStart</span>=<span class="value">"4dp"</span>
+<span class="caretline"><span class="lineno">  88 </span>            <span class="warning"><span class="prefix">android:</span><span class="attribute">text</span>=<span class="value">"自動"</span></span> />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno">  89 </span>
+<span class="lineno">  90 </span>        <span class="tag">&lt;Button</span><span class="attribute">
+</span><span class="lineno">  91 </span><span class="attribute">            </span><span class="prefix">android:</span><span class="attribute">id</span>=<span class="value">"@+id/btnPolyphonyFixed"</span></pre>
+
+<span class="location"><a href="../../src/main/res/layout/activity_main.xml">../../src/main/res/layout/activity_main.xml</a>:96</span>: <span class="message">Hardcoded string "&#22266;&#23450;", should use <code>@string</code> resource</span><br /><pre class="errorlines">
+<span class="lineno">  93 </span>            <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span>
+<span class="lineno">  94 </span>            <span class="prefix">android:</span><span class="attribute">layout_weight</span>=<span class="value">"1"</span>
+<span class="lineno">  95 </span>            <span class="prefix">android:</span><span class="attribute">layout_marginStart</span>=<span class="value">"4dp"</span>
+<span class="caretline"><span class="lineno">  96 </span>            <span class="warning"><span class="prefix">android:</span><span class="attribute">text</span>=<span class="value">"固定"</span></span> />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno">  97 </span>    <span class="tag">&lt;/LinearLayout></span>
+<span class="lineno">  98 </span>
+<span class="lineno">  99 </span>    <span class="tag">&lt;LinearLayout</span></pre>
+
+<span class="location"><a href="../../src/main/res/layout/activity_main.xml">../../src/main/res/layout/activity_main.xml</a>:109</span>: <span class="message">Hardcoded string "&#22266;&#23450;&#25968;:", should use <code>@string</code> resource</span><br /><pre class="errorlines">
+<span class="lineno"> 106 </span>        <span class="tag">&lt;TextView</span><span class="attribute">
+</span><span class="lineno"> 107 </span><span class="attribute">            </span><span class="prefix">android:</span><span class="attribute">layout_width</span>=<span class="value">"wrap_content"</span>
+<span class="lineno"> 108 </span>            <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span>
+<span class="caretline"><span class="lineno"> 109 </span>            <span class="warning"><span class="prefix">android:</span><span class="attribute">text</span>=<span class="value">"固定数:"</span></span> />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno"> 110 </span>
+<span class="lineno"> 111 </span>        <span class="tag">&lt;SeekBar</span><span class="attribute">
+</span><span class="lineno"> 112 </span><span class="attribute">            </span><span class="prefix">android:</span><span class="attribute">id</span>=<span class="value">"@+id/seekPolyphonyCount"</span></pre>
+
+<span class="location"><a href="../../src/main/res/layout/activity_main.xml">../../src/main/res/layout/activity_main.xml</a>:123</span>: <span class="message">Hardcoded string "4", should use <code>@string</code> resource</span><br /><pre class="errorlines">
+<span class="lineno"> 120 </span><span class="attribute">            </span><span class="prefix">android:</span><span class="attribute">id</span>=<span class="value">"@+id/txtPolyphonyCount"</span>
+<span class="lineno"> 121 </span>            <span class="prefix">android:</span><span class="attribute">layout_width</span>=<span class="value">"24dp"</span>
+<span class="lineno"> 122 </span>            <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span>
+<span class="caretline"><span class="lineno"> 123 </span>            <span class="warning"><span class="prefix">android:</span><span class="attribute">text</span>=<span class="value">"4"</span></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno"> 124 </span>            <span class="prefix">android:</span><span class="attribute">textAlignment</span>=<span class="value">"center"</span> />
+<span class="lineno"> 125 </span>    <span class="tag">&lt;/LinearLayout></span>
+</pre>
+
+<span class="location"><a href="../../src/main/res/layout/activity_main.xml">../../src/main/res/layout/activity_main.xml</a>:147</span>: <span class="message">Hardcoded string "&#12473;&#12486;&#12540;&#12479;&#12473;", should use <code>@string</code> resource</span><br /><pre class="errorlines">
+<span class="lineno"> 144 </span>            <span class="prefix">android:</span><span class="attribute">layout_height</span>=<span class="value">"wrap_content"</span>
+<span class="lineno"> 145 </span>            <span class="prefix">android:</span><span class="attribute">paddingBottom</span>=<span class="value">"8dp"</span>
+<span class="lineno"> 146 </span>            <span class="prefix">android:</span><span class="attribute">paddingTop</span>=<span class="value">"8dp"</span>
+<span class="caretline"><span class="lineno"> 147 </span>            <span class="warning"><span class="prefix">android:</span><span class="attribute">text</span>=<span class="value">"ステータス"</span></span> />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno"> 148 </span>    <span class="tag">&lt;/ScrollView></span>
+<span class="lineno"> 149 </span>
+<span class="lineno"> 150 </span><span class="tag">&lt;/LinearLayout></span></pre>
+
+</div>
 </div>
 <div class="metadata"><div class="explanation" id="explanationHardcodedText" style="display: none;">
 Hardcoding text attributes directly in layout files is bad for several reasons:<br/>
