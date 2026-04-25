@@ -160,6 +160,9 @@ public class MainActivity extends Activity {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 polyphonyCount = MIN_POLYPHONY_COUNT + progress;
                 updatePolyphonyLabel(polyphonyCount);
+                if (audioMonitorTask != null) {
+                    audioMonitorTask.updatePolyphonyConfig(polyphonyMode, polyphonyCount);
+                }
             }
 
             @Override
@@ -175,6 +178,9 @@ public class MainActivity extends Activity {
     private void setPolyphonyMode(PolyphonyMode mode) {
         polyphonyMode = mode;
         updatePolyphonyModeButtons();
+        if (audioMonitorTask != null) {
+            audioMonitorTask.updatePolyphonyConfig(mode, polyphonyCount);
+        }
     }
 
     private void updatePolyphonyModeButtons() {
@@ -323,18 +329,39 @@ public class MainActivity extends Activity {
         if (stablePitches == null || stablePitches.isEmpty()) {
             return "z";
         }
-        if (stablePitches.size() == 1) {
-            return stablePitches.get(0).toAbcNote();
+
+        List<DetectedPitch> filteredPitches = filterPitchesByPolyphony(stablePitches);
+        
+        if (filteredPitches.isEmpty()) {
+            return "z";
+        }
+        if (filteredPitches.size() == 1) {
+            return filteredPitches.get(0).toAbcNote();
         }
         StringBuilder builder = new StringBuilder("[");
-        for (int i = 0; i < stablePitches.size(); i++) {
+        for (int i = 0; i < filteredPitches.size(); i++) {
             if (i > 0) {
                 builder.append(' ');
             }
-            builder.append(stablePitches.get(i).toAbcNote());
+            builder.append(filteredPitches.get(i).toAbcNote());
         }
         builder.append(']');
         return builder.toString();
+    }
+
+    private List<DetectedPitch> filterPitchesByPolyphony(List<DetectedPitch> pitches) {
+        int maxCount;
+        if (polyphonyMode == PolyphonyMode.AUTOMATIC) {
+            maxCount = 4;
+        } else {
+            maxCount = Math.max(1, Math.min(polyphonyCount, 8));
+        }
+
+        if (pitches.size() <= maxCount) {
+            return pitches;
+        }
+
+        return new ArrayList<>(pitches.subList(0, maxCount));
     }
 
     private void stopCurrentPlayback() {
@@ -488,6 +515,7 @@ public class MainActivity extends Activity {
         private static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
 
         private final Object recordingLock = new Object();
+        private final Object polyphonyLock = new Object();
         private final int sampleRate;
         private final AnalysisConfig analysisConfig;
         private final AudioAnalysisEngine analysisEngine;
@@ -495,6 +523,7 @@ public class MainActivity extends Activity {
 
         private volatile boolean running = true;
         private volatile boolean recording;
+        private volatile int currentMaxDisplayNotes = SpectrumView.NOTE_COUNT;
 
         private AudioRecord recorder;
         private String currentChord;
@@ -563,7 +592,7 @@ public class MainActivity extends Activity {
                     );
                     AudioAnalysisResult frame = analysisEngine.analyze(buffer, read, measuredFrameDurationSec, thresholdMultiplier);
                     updateRecording(frame, measuredFrameDurationSec, readEndNanos);
-                    publishProgress(new MonitorUpdate(frame.noteMagnitudes, (float) frame.threshold, frame.noteSummary));
+                    publishProgress(new MonitorUpdate(frame.noteMagnitudes, (float) frame.threshold, frame.noteSummary, currentMaxDisplayNotes));
                 }
                 return null;
             } catch (SecurityException e) {
@@ -584,7 +613,7 @@ public class MainActivity extends Activity {
         @Override
         protected void onProgressUpdate(MonitorUpdate... values) {
             MonitorUpdate update = values[0];
-            spectrumView.updateSpectrum(update.noteMagnitudes, update.threshold, update.summary);
+            spectrumView.updateSpectrum(update.noteMagnitudes, update.threshold, update.summary, update.maxDisplayNotes);
         }
 
         @Override
@@ -614,6 +643,19 @@ public class MainActivity extends Activity {
 
         boolean isRecording() {
             return recording;
+        }
+
+        void updatePolyphonyConfig(PolyphonyMode mode, int count) {
+            synchronized (polyphonyLock) {
+                analysisConfig.polyphonyMode = mode;
+                analysisConfig.fixedPolyphonyCount = count;
+                
+                if (mode == PolyphonyMode.FIXED) {
+                    currentMaxDisplayNotes = Math.max(1, Math.min(count, 8));
+                } else {
+                    currentMaxDisplayNotes = SpectrumView.NOTE_COUNT;
+                }
+            }
         }
 
         void startRecordingSession(double tempoBpm) {
@@ -842,11 +884,13 @@ public class MainActivity extends Activity {
         final float[] noteMagnitudes;
         final float threshold;
         final String summary;
+        final int maxDisplayNotes;
 
-        MonitorUpdate(float[] noteMagnitudes, float threshold, String summary) {
+        MonitorUpdate(float[] noteMagnitudes, float threshold, String summary, int maxDisplayNotes) {
             this.noteMagnitudes = noteMagnitudes;
             this.threshold = threshold;
             this.summary = summary;
+            this.maxDisplayNotes = maxDisplayNotes;
         }
     }
 

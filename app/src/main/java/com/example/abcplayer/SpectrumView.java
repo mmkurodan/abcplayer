@@ -24,6 +24,8 @@ public class SpectrumView extends View {
     private final float[] noteMagnitudes = new float[NOTE_COUNT];
     private float threshold;
     private String detectedChord = "待機中";
+    private int polyphonyCount = 8;
+    private int maxDisplayNotes = NOTE_COUNT;
 
     public SpectrumView(Context context) {
         super(context);
@@ -64,6 +66,10 @@ public class SpectrumView extends View {
     }
 
     public void updateSpectrum(float[] magnitudes, float threshold, String detectedChord) {
+        updateSpectrum(magnitudes, threshold, detectedChord, NOTE_COUNT);
+    }
+
+    public void updateSpectrum(float[] magnitudes, float threshold, String detectedChord, int maxDisplayNotes) {
         int length = Math.min(magnitudes.length, noteMagnitudes.length);
         System.arraycopy(magnitudes, 0, noteMagnitudes, 0, length);
         for (int i = length; i < noteMagnitudes.length; i++) {
@@ -71,7 +77,12 @@ public class SpectrumView extends View {
         }
         this.threshold = threshold;
         this.detectedChord = detectedChord == null ? "z" : detectedChord;
+        this.maxDisplayNotes = Math.max(1, Math.min(maxDisplayNotes, NOTE_COUNT));
         postInvalidateOnAnimation();
+    }
+
+    public void setPolyphonyCount(int count) {
+        this.polyphonyCount = Math.max(1, Math.min(count, 8));
     }
 
     @Override
@@ -82,7 +93,7 @@ public class SpectrumView extends View {
         float height = getHeight();
         canvas.drawRect(0, 0, width, height, backgroundPaint);
 
-        float left = dp(48f);
+        float left = dp(12f);
         float top = dp(28f);
         float right = width - dp(12f);
         float bottom = height - dp(28f);
@@ -93,9 +104,9 @@ public class SpectrumView extends View {
         float plotWidth = right - left;
         float plotHeight = bottom - top;
         float maxMagnitude = 1f;
-        for (float magnitude : noteMagnitudes) {
-            if (magnitude > maxMagnitude) {
-                maxMagnitude = magnitude;
+        for (int i = 0; i < maxDisplayNotes; i++) {
+            if (noteMagnitudes[i] > maxMagnitude) {
+                maxMagnitude = noteMagnitudes[i];
             }
         }
         if (threshold > 0f) {
@@ -114,14 +125,12 @@ public class SpectrumView extends View {
             float fraction = i / 4f;
             float y = bottom - fraction * plotHeight;
             canvas.drawLine(left, y, right, y, gridPaint);
-            float labelValue = maxMagnitude * fraction;
-            canvas.drawText(String.format(java.util.Locale.US, "%.0f", labelValue), dp(4f), y + dp(4f), textPaint);
         }
     }
 
     private void drawBars(Canvas canvas, float left, float top, float bottom, float plotWidth, float plotHeight, float maxMagnitude) {
-        float barWidth = plotWidth / NOTE_COUNT;
-        for (int i = 0; i < NOTE_COUNT; i++) {
+        float barWidth = plotWidth / maxDisplayNotes;
+        for (int i = 0; i < maxDisplayNotes; i++) {
             float magnitude = noteMagnitudes[i];
             float normalized = magnitude / maxMagnitude;
             float barTop = bottom - normalized * plotHeight;
@@ -148,13 +157,14 @@ public class SpectrumView extends View {
     }
 
     private void drawLabels(Canvas canvas, float left, float top, float right, float bottom, float plotWidth) {
-        canvas.drawText("強さ", left, dp(16f), textPaint);
+        canvas.drawText("強さ", dp(2f), top, textPaint);
         canvas.drawText("音階", right - dp(24f), getHeight() - dp(6f), textPaint);
         canvas.drawText("検出: " + detectedChord, left, top - dp(8f), textPaint);
 
-        float barWidth = plotWidth / NOTE_COUNT;
-        for (int midi = MIN_MIDI; midi <= MAX_MIDI; midi += 12) {
+        float barWidth = plotWidth / maxDisplayNotes;
+        for (int midi = MIN_MIDI; midi <= MIN_MIDI + maxDisplayNotes - 1; midi += 12) {
             int index = midi - MIN_MIDI;
+            if (index < 0 || index >= maxDisplayNotes) continue;
             float x = left + index * barWidth;
             canvas.drawLine(x, top, x, bottom, gridPaint);
             canvas.drawText(midiToLabel(midi), x + dp(2f), bottom + dp(16f), textPaint);
